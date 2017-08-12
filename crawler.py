@@ -9,7 +9,19 @@ import sys
 
 class Insta(object):
     def __init__(self):
-        self.driver = webdriver.Chrome()
+        # load settings
+        with open('configs.json', 'r') as configs:
+            conf = json.loads(configs.read())
+        
+        # load the driver
+        if conf['browser'] == 'chrome':
+            self.driver = webdriver.Chrome()
+        elif conf['browser'] == 'phantomjs':
+            self.driver = webdriver.PhantomJS()
+        else:
+            raise Exception('No browser configured; add one to configs.json')
+        
+        # open instagram
         self.driver.get('https://instagram.com')
         self.main_handle = self.driver.window_handles[0]
 
@@ -164,6 +176,9 @@ if __name__ == '__main__':
             insta.search(tag)
             insta.like_tag(tag)
             time.sleep(5)
+
+    if sys.argv[1] == 'feed':
+        insta.like_feed()
 
     elif sys.argv[1] == 'follow':
         for tag in tags:
