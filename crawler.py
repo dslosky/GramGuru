@@ -52,8 +52,10 @@ class Insta(object):
         page_limit = min(self.configs['pageLimit'], len(links))
         for a in links[:page_limit]:
             if a.get_attribute('href') not in self.configs['avoidUrls']:
-                self.driver.execute_script('window.open("' + a.get_attribute('href') + '","_blank");')
-
+                try:
+                    self.driver.execute_script('window.open("' + a.get_attribute('href') + '","_blank");')
+                except Exception as e:
+                    pass
         # wait for all the tabs to open
         time.sleep(2)
 
@@ -71,12 +73,19 @@ class Insta(object):
                         button = self.driver.find_element_by_xpath("//*[contains(text(), 'Follow')]")
                         button.click()
                         time.sleep(5)
-                        new_follows += [(self.driver
-                                                .find_element_by_class_name('notranslate')
-                                                .get_attribute('text'))]
+                        
                     except Exception as e:
                         pass
 
+                try:
+                    button = self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
+                    new_follows += [(self.driver
+                                        .find_element_by_class_name('notranslate')
+                                        .get_attribute('text'))]
+                except:
+                    # maxed out follows, time to quit
+                    break
+                
                 # close the window
                 self.driver.execute_script('window.close()')
 
