@@ -3,6 +3,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
 import time
+import datetime
 import json
 import random
 import sys
@@ -66,23 +67,24 @@ class Insta(object):
             if window != self.main_handle:
                 self.driver.switch_to_window(window)
 
-                try:
-                    button = self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
-                except Exception as e:
+                if self.is_following():
+                    # skip this one, we're already following
+                    continue
+                else:
                     try:
                         button = self.driver.find_element_by_xpath("//*[contains(text(), 'Follow')]")
                         button.click()
-                        time.sleep(5)
+                        time.sleep(2)
                         
                     except Exception as e:
-                        pass
+                        msg = 'Follow failed: ' + self.driver.current_url
+                        self.log(msg=msg, err=e)
 
-                try:
-                    button = self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
+                if self.is_following():
                     new_follows += [(self.driver
                                         .find_element_by_class_name('notranslate')
                                         .get_attribute('text'))]
-                except:
+                else:
                     # maxed out follows, time to quit
                     break
                 
@@ -101,6 +103,13 @@ class Insta(object):
                 file_.write(json.dumps(following, indent=4))
 
         return new_follows
+
+    def is_following(self):
+        try:
+            self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
+        except:
+            return False
+        return True
 
     def unfollow_all(self):
         with open('following.json', 'r') as file_:
@@ -164,6 +173,18 @@ class Insta(object):
         self.driver.find_element_by_name('username').send_keys(user['username'])
         self.driver.find_element_by_name('password').send_keys(user['password'])
         self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]").click()
+
+    def log(self, msg, err=None):
+        timestamp = (datetime.datetime.fromtimestamp(time.time())
+                                        .strftime('%Y-%m-%d %H:%M:%S'))
+        if err is not None:
+            error_msg = 'ERROR: {}: {}\n'.format(type(err), err)
+        else:
+            error_msg = '\n'
+
+        with open('crawler.log', 'a') as log:
+            log.write('{}: {}\n{}'.format(timestamp, msg, error_msg))
+
 
 def shuffle(lst):
     new_lst = []
