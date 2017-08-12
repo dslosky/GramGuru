@@ -58,7 +58,7 @@ class Insta(object):
         time.sleep(2)
 
     def follow(self, tag):
-        open_tabs(tag=tag, scroll_count=0)
+        self.open_tabs(tag=tag, scroll_count=0)
         new_follows = []
         for window in self.driver.window_handles:
             if window != self.main_handle:
@@ -77,8 +77,8 @@ class Insta(object):
                     except Exception as e:
                         pass
 
-            # close the window
-            self.driver.execute_script('window.close()')
+                # close the window
+                self.driver.execute_script('window.close()')
 
         self.driver.switch_to_window(self.main_handle)
 
