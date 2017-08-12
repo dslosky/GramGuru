@@ -6,6 +6,7 @@ import time
 import json
 import random
 import sys
+import copy
 
 class Insta(object):
     def __init__(self):
@@ -24,6 +25,7 @@ class Insta(object):
         # open instagram
         self.driver.get('https://instagram.com')
         self.main_handle = self.driver.window_handles[0]
+        self.configs = conf
 
     def search(self, tag):
         self.driver.get('https://www.instagram.com/explore/tags/' + tag + '/')
@@ -42,12 +44,15 @@ class Insta(object):
 
     def open_tabs(self, tag='', scroll_count=0):
         self.scroll(count=scroll_count)
+
         links = self.driver.find_elements_by_xpath("//a")
-        to_follow = []
-        for a in links:
-            #if "tagged=" + tag in a.get_attribute('href'):
-            # open it in a new tab
-            self.driver.execute_script('window.open("' + a.get_attribute('href') + '","_blank");')
+        links = shuffle(links)
+
+        # set a page limit to avoid overclocking
+        page_limit = min(self.configs['pageLimit'], len(links))
+        for a in links[:page_limit]:
+            if a.get_attribute('href') not in self.configs['avoidUrls']:
+                self.driver.execute_script('window.open("' + a.get_attribute('href') + '","_blank");')
 
         # wait for all the tabs to open
         time.sleep(2)
@@ -153,6 +158,7 @@ class Insta(object):
 
 def shuffle(lst):
     new_lst = []
+    lst = copy.copy(lst)
     while len(lst) > 1:
         pos = int(round(random.random() * (len(lst)-1)))    
         item = lst.pop(pos)
@@ -186,4 +192,4 @@ if __name__ == '__main__':
             insta.follow(tag)
             time.sleep(5)
 
-    insta.driver.execute_script('window.close()')
+    insta.driver.quit()
