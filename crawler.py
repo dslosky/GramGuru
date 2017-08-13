@@ -129,14 +129,18 @@ class Insta(object):
             time.sleep(2)
             if self.is_following():
                 button = self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
-                button.click()
-                time.sleep(1)
+                actionChains = ActionChains(self.driver)
+                actionChains.click(button).perform()
+                
+                time.sleep(2)
                 if self.is_following():
                     # the unfollow didn't work, time to stop
                     failed += [user]
                     break
                 else:
                     deleted += [user]
+            else:
+                deleted += [user]
 
         leftover = []
         for name in current_lst['following']:
