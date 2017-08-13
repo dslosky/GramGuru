@@ -72,9 +72,9 @@ class Insta(object):
                     continue
                 else:
                     try:
+                        time.sleep(2)
                         button = self.driver.find_element_by_xpath("//*[contains(text(), 'Follow')]")
                         button.click()
-                        time.sleep(2)
                         
                     except Exception as e:
                         msg = 'Follow failed: ' + self.driver.current_url
@@ -114,19 +114,28 @@ class Insta(object):
     def unfollow_all(self):
         with open('following.json', 'r') as file_:
             current_lst = json.loads(file_.read())
-
-        failed = []
+            failed = current_lst['failedToDelete']
         deleted = []
         for user in current_lst['following']:
-            try:
-                self.driver.get('https://www.instagram.com/' + user + '/')
+            self.driver.get('https://www.instagram.com/' + user + '/')
+            time.sleep(2)
+            if self.is_following():
                 button = self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
                 button.click()
-                deleted += [user]
-            except Exception as e:
-                failed += [user]
+                time.sleep(1)
+                if self.is_following():
+                    # the unfollow didn't work, time to stop
+                    failed += [user]
+                    break
+                else:
+                    deleted += [user]
 
-        failed_json = json.dumps({"following": [], "failedToDelete": failed}, indent=4)
+        leftover = []
+        for name in current_lst['following']:
+            if name not in deleted:
+                leftover += [name]
+
+        failed_json = json.dumps({"following": leftover, "failedToDelete": failed}, indent=4)
         with open('following.json', 'w') as file_:
             file_.write(failed_json)
 
