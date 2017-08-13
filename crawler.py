@@ -39,11 +39,15 @@ class Insta(object):
         except:
             pass
 
-        for i in xrange(count):
+        for i in range(count):
             self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(1)
 
     def open_tabs(self, tag='', scroll_count=0):
+        '''
+        Open up a bunch of tabs of individual photo urls
+        '''
+
         self.scroll(count=scroll_count)
 
         links = self.driver.find_elements_by_xpath("//a")
@@ -61,26 +65,30 @@ class Insta(object):
         time.sleep(2)
 
     def follow(self, tag):
+        '''
+        Follow users found by searching for a specific tag
+        '''
         self.open_tabs(tag=tag, scroll_count=0)
+    
+        # scroll to the tabs and follow everyone
         new_follows = []
         for window in self.driver.window_handles:
             if window != self.main_handle:
                 self.driver.switch_to_window(window)
+                time.sleep(1)
 
                 if self.is_following():
                     # skip this one, we're already following
                     continue
                 else:
-                    try:
-                        time.sleep(2)
-                        button = self.driver.find_element_by_xpath("//*[contains(text(), 'Follow')]")
-                        button.click()
-                        
-                    except Exception as e:
-                        msg = 'Follow failed: ' + self.driver.current_url
-                        self.log(msg=msg, err=e)
+                    button = self.driver.find_element_by_xpath("//*[contains(text(), 'Follow')]")
+                    actionChains = ActionChains(self.driver)
+                    actionChains.click(button).perform()
+                    button.click()
+                    time.sleep(2)
 
                 if self.is_following():
+                    # Save the followers we're adding so we can track them
                     new_follows += [(self.driver
                                         .find_element_by_class_name('notranslate')
                                         .get_attribute('text'))]
@@ -153,7 +161,6 @@ class Insta(object):
 
     def like_tag(self, tag, scroll_count=5):
         self.open_tabs(tag=tag, scroll_count=scroll_count)
-
         count = 0
         for window in self.driver.window_handles:
             if window != self.main_handle:
