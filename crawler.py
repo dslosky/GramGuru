@@ -110,6 +110,7 @@ class Insta(object):
             with open('following.json', 'w') as file_:
                 file_.write(json.dumps(following, indent=4))
 
+        self.log('Followed {} in #{}'.format(len(new_follows), tag))
         return new_follows
 
     def is_following(self):
@@ -131,7 +132,7 @@ class Insta(object):
                 button = self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
                 actionChains = ActionChains(self.driver)
                 actionChains.click(button).perform()
-                
+
                 time.sleep(2)
                 if self.is_following():
                     # the unfollow didn't work, time to stop
@@ -151,9 +152,10 @@ class Insta(object):
         with open('following.json', 'w') as file_:
             file_.write(failed_json)
 
+        self.log('Unfollowed {} in #{}'.format(len(deleted), tag))
         return deleted
 
-    def like_feed(self, scroll_count=15):
+    def like_feed(self, scroll_count=2):
         self.driver.get('https://www.instagram.com/')
         self.scroll(count=scroll_count)
         pics = self.driver.find_elements_by_class_name("_si7dy")
@@ -163,6 +165,8 @@ class Insta(object):
             actionChains.double_click(pic).perform()
             time.sleep(2)
 
+        self.log('Liked {} in feed'.format(len(pics)))
+        return len(pics)
     def like_tag(self, tag, scroll_count=5):
         self.open_tabs(tag=tag, scroll_count=scroll_count)
         count = 0
@@ -183,6 +187,8 @@ class Insta(object):
                 self.driver.execute_script('window.close()')
 
         self.driver.switch_to_window(self.main_handle)
+
+        self.log('Liked {} in #{}'.format(count, tag))
         return count
 
     def login(self, username='', password=''):
@@ -200,7 +206,7 @@ class Insta(object):
         if err is not None:
             error_msg = 'ERROR: {}: {}\n'.format(type(err), err)
         else:
-            error_msg = '\n'
+            error_msg = ''
 
         with open('crawler.log', 'a') as log:
             log.write('{}: {}\n{}'.format(timestamp, msg, error_msg))
@@ -233,7 +239,7 @@ if __name__ == '__main__':
             insta.like_tag(tag)
             time.sleep(5)
 
-    if sys.argv[1] == 'feed':
+    elif sys.argv[1] == 'feed':
         insta.like_feed()
 
     elif sys.argv[1] == 'follow':
