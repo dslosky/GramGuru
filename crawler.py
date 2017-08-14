@@ -120,11 +120,12 @@ class Insta(object):
             return False
         return True
 
-    def unfollow_all(self):
+    def unfollow(self, stop=50):
         with open('following.json', 'r') as file_:
             current_lst = json.loads(file_.read())
             failed = current_lst['failedToDelete']
         deleted = []
+        delete_count = 0
         for user in current_lst['following']:
             self.driver.get('https://www.instagram.com/' + user + '/')
             time.sleep(2)
@@ -140,6 +141,10 @@ class Insta(object):
                     break
                 else:
                     deleted += [user]
+                    delete_count += 1
+
+                    if delete_count > stop:
+                        break
             else:
                 deleted += [user]
 
@@ -152,7 +157,7 @@ class Insta(object):
         with open('following.json', 'w') as file_:
             file_.write(failed_json)
 
-        self.log('Unfollowed {} in #{}'.format(len(deleted), tag))
+        self.log('Unfollowed {} people'.format(len(deleted)))
         return deleted
 
     def like_feed(self, scroll_count=2):
@@ -247,5 +252,8 @@ if __name__ == '__main__':
             insta.search(tag)
             insta.follow(tag)
             time.sleep(5)
+
+    elif sys.argv[1] == 'unfollow':
+        insta.unfollow()
 
     insta.driver.quit()
