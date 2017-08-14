@@ -72,6 +72,7 @@ class Insta(object):
     
         # scroll to the tabs and follow everyone
         new_follows = []
+        failed = False
         for window in self.driver.window_handles:
             if window != self.main_handle:
                 self.driver.switch_to_window(window)
@@ -84,7 +85,6 @@ class Insta(object):
                     button = self.driver.find_element_by_xpath("//*[contains(text(), 'Follow')]")
                     actionChains = ActionChains(self.driver)
                     actionChains.click(button).perform()
-                    button.click()
                     time.sleep(2)
 
                 if self.is_following():
@@ -94,6 +94,7 @@ class Insta(object):
                                         .get_attribute('text'))]
                 else:
                     # maxed out follows, time to quit
+                    failed = True
                     break
                 
                 # close the window
@@ -111,7 +112,7 @@ class Insta(object):
                 file_.write(json.dumps(following, indent=4))
 
         self.log('Followed {} in #{}'.format(len(new_follows), tag))
-        return new_follows
+        return new_follows, failed
 
     def is_following(self):
         try:
@@ -123,7 +124,6 @@ class Insta(object):
     def unfollow(self, stop=50):
         with open('following.json', 'r') as file_:
             current_lst = json.loads(file_.read())
-            failed = current_lst['failedToDelete']
         deleted = []
         delete_count = 0
         for user in current_lst['following']:
@@ -133,12 +133,19 @@ class Insta(object):
                 button = self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
                 actionChains = ActionChains(self.driver)
                 actionChains.click(button).perform()
-
+                time.sleep(1)
+                self.driver.get('https://www.instagram.com/' + user + '/')
                 time.sleep(2)
                 if self.is_following():
-                    # the unfollow didn't work, time to stop
-                    failed += [user]
-                    break
+                    # the unfollow didn't work
+                    try:
+                        self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]").click()
+                        # can't unfollow, time to stop
+                        break
+                    except:
+                        # Looks like it might be okay
+                        deleted += [user]
+                        delete_count += 1
                 else:
                     deleted += [user]
                     delete_count += 1
@@ -153,11 +160,11 @@ class Insta(object):
             if name not in deleted:
                 leftover += [name]
 
-        failed_json = json.dumps({"following": leftover, "failedToDelete": failed}, indent=4)
+        failed_json = json.dumps({"following": leftover, "failedToDelete": []}, indent=4)
         with open('following.json', 'w') as file_:
             file_.write(failed_json)
 
-        self.log('Unfollowed {} people'.format(len(deleted)))
+        self.log('Unfollowed {} people'.format(delete_count))
         return deleted
 
     def like_feed(self, scroll_count=2):
@@ -240,20 +247,38 @@ if __name__ == '__main__':
 
     if sys.argv[1] == 'like':
         for tag in tags:
-            insta.search(tag)
-            insta.like_tag(tag)
+            try:
+                insta.search(tag)
+                user, failed = insta.like_tag(tag)
+                if failed is True:
+                    break
+            except Exception as e:
+                msg = 'Like failed on #{}'.format(tag)
+                insta.log(msg=msg, err=e)
             time.sleep(5)
 
     elif sys.argv[1] == 'feed':
-        insta.like_feed()
+        try:
+            insta.like_feed()
+        except Exception as e:
+            msg = 'Feed failed'
+            insta.log(msg=msg, err=e)
 
     elif sys.argv[1] == 'follow':
         for tag in tags:
-            insta.search(tag)
-            insta.follow(tag)
-            time.sleep(5)
+            try:
+                insta.search(tag)
+                insta.follow(tag)
+                time.sleep(5)
+            except Exception as e:
+                msg = 'Follow failed on #{}'.format(tag)
+                insta.log(msg=msg, err=e)
 
     elif sys.argv[1] == 'unfollow':
-        insta.unfollow()
+        try:
+            insta.unfollow()
+        except Exception as e:
+            msg = 'Unfollow failed'
+            insta.log(msg=msg, err=e)
 
     insta.driver.quit()
