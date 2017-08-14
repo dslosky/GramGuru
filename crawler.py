@@ -64,6 +64,11 @@ class Insta(object):
         # wait for all the tabs to open
         time.sleep(2)
 
+    def close_open_tabs(self):
+        for window in self.driver.window_handles:
+            if window != self.main_handle:
+                self.driver.execute_script('window.close()')
+
     def follow(self, tag):
         '''
         Follow users found by searching for a specific tag
@@ -72,14 +77,15 @@ class Insta(object):
     
         # scroll to the tabs and follow everyone
         new_follows = []
-        failed = False
+        finished = False
         for window in self.driver.window_handles:
             if window != self.main_handle:
                 self.driver.switch_to_window(window)
                 time.sleep(1)
 
-                if self.is_following():
+                if self.is_following() or not self.can_follow():
                     # skip this one, we're already following
+                    self.driver.execute_script('window.close()')
                     continue
                 else:
                     button = self.driver.find_element_by_xpath("//*[contains(text(), 'Follow')]")
@@ -94,7 +100,9 @@ class Insta(object):
                                         .get_attribute('text'))]
                 else:
                     # maxed out follows, time to quit
-                    failed = True
+                    finished = True
+                    # close the tabs
+                    self.close_open_tabs()
                     break
                 
                 # close the window
@@ -112,11 +120,24 @@ class Insta(object):
                 file_.write(json.dumps(following, indent=4))
 
         self.log('Followed {} in #{}'.format(len(new_follows), tag))
-        return new_follows, failed
+        return new_follows, finished
 
     def is_following(self):
+        '''
+        Check if this user is already being followed
+        '''
         try:
             self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
+        except:
+            return False
+        return True
+
+    def can_follow(self):
+        '''
+        Check if there is an option to follow available
+        '''
+        try:
+            self.driver.find_element_by_xpath("//*[contains(text(), 'Follow')]")
         except:
             return False
         return True
@@ -249,9 +270,7 @@ if __name__ == '__main__':
         for tag in tags:
             try:
                 insta.search(tag)
-                user, failed = insta.like_tag(tag)
-                if failed is True:
-                    break
+                insta.like_tag(tag)
             except Exception as e:
                 msg = 'Like failed on #{}'.format(tag)
                 insta.log(msg=msg, err=e)
@@ -268,7 +287,10 @@ if __name__ == '__main__':
         for tag in tags:
             try:
                 insta.search(tag)
-                insta.follow(tag)
+                users, finished = insta.follow(tag)
+                if finished is True:
+                    break
+
                 time.sleep(5)
             except Exception as e:
                 msg = 'Follow failed on #{}'.format(tag)
