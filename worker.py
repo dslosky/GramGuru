@@ -15,8 +15,7 @@ class Worker(object):
         now = time.time()
 
         # grab all jobs ready to run from users that don't have any
-        # jobs currently running. This should be editted to only grab 
-        # unique usernames, so don't grab two jobs for the same user at once
+        # jobs currently running.
         jobs = (session.query(Job)
                             .filter(Job.run < now)
                             .filter(not_(Job.running))
