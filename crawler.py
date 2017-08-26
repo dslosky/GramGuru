@@ -7,26 +7,27 @@ import datetime
 import json
 import random
 import sys
-import copy
+
+from orm import *
+from util import shuffle, Configs
+CONFIG = Configs()
 
 class Insta(object):
     def __init__(self):
         # load settings
-        with open('configs.json', 'r') as configs:
-            conf = json.loads(configs.read())
-        
+
         # load the driver
-        if conf['browser'] == 'chrome':
+        if CONFIG['browser'] == 'chrome':
             self.driver = webdriver.Chrome()
-        elif conf['browser'] == 'phantomjs':
+        elif CONFIG['browser'] == 'phantomjs':
             self.driver = webdriver.PhantomJS()
         else:
             raise Exception('No browser configured; add one to configs.json')
         
         # open instagram
+        self.user = None
         self.driver.get('https://instagram.com')
         self.main_handle = self.driver.window_handles[0]
-        self.configs = conf
 
     def search(self, tag):
         self.driver.get('https://www.instagram.com/explore/tags/' + tag + '/')
@@ -54,9 +55,9 @@ class Insta(object):
         links = shuffle(links)
 
         # set a page limit to avoid overclocking
-        page_limit = min(self.configs['pageLimit'], len(links))
+        page_limit = min(CONFIGS['pageLimit'], len(links))
         for a in links[:page_limit]:
-            if a.get_attribute('href') not in self.configs['avoidUrls']:
+            if a.get_attribute('href') not in CONFIGS['avoidUrls']:
                 try:
                     self.driver.execute_script('window.open("' + a.get_attribute('href') + '","_blank");')
                 except Exception as e:
@@ -111,13 +112,14 @@ class Insta(object):
         self.driver.switch_to_window(self.main_handle)
 
         if len(new_follows) > 0:
-            with open('following.json', 'r') as file_:
-                following = json.loads(file_.read())
-                following['following'] += new_follows
-                following['following'] = list(set(following['following']))
-
-            with open('following.json', 'w') as file_:
-                file_.write(json.dumps(following, indent=4))
+            i_user = (session.query(IUser)
+                        .filter(IUser.username == self.user)
+                        .first())
+            for user in following:
+                f = Following()
+                f.timestamp = time.time()
+                f.i_user = user
+                f.other_user = user
 
         self.log('Followed {} in #{}'.format(len(new_follows), tag))
         return new_follows, finished
@@ -142,20 +144,18 @@ class Insta(object):
             return False
         return True
 
-    def unfollow(self, stop=50):
-        with open('following.json', 'r') as file_:
-            current_lst = json.loads(file_.read())
+    def unfollow(self, following=None):
         deleted = []
         delete_count = 0
-        for user in current_lst['following']:
-            self.driver.get('https://www.instagram.com/' + user + '/')
+        for follow in following:
+            self.driver.get('https://www.instagram.com/' + follow.other_user + '/')
             time.sleep(2)
             if self.is_following():
                 button = self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
                 actionChains = ActionChains(self.driver)
                 actionChains.click(button).perform()
                 time.sleep(1)
-                self.driver.get('https://www.instagram.com/' + user + '/')
+                self.driver.get('https://www.instagram.com/' + follow.other_user + '/')
                 time.sleep(2)
                 if self.is_following():
                     # the unfollow didn't work
@@ -165,25 +165,19 @@ class Insta(object):
                         break
                     except:
                         # Looks like it might be okay
-                        deleted += [user]
+                        deleted += [follow]
                         delete_count += 1
                 else:
-                    deleted += [user]
+                    deleted += [follow]
                     delete_count += 1
-
-                    if delete_count > stop:
-                        break
             else:
-                deleted += [user]
+                deleted += [follow]
+        
+        # remove deleted follows from the database
+        for follow in deleted:
+            session.delete(follow)
 
-        leftover = []
-        for name in current_lst['following']:
-            if name not in deleted:
-                leftover += [name]
-
-        failed_json = json.dumps({"following": leftover, "failedToDelete": []}, indent=4)
-        with open('following.json', 'w') as file_:
-            file_.write(failed_json)
+        session.commit()
 
         self.log('Unfollowed {} people'.format(delete_count))
         return deleted
@@ -200,6 +194,7 @@ class Insta(object):
 
         self.log('Liked {} in feed'.format(len(pics)))
         return len(pics)
+
     def like_tag(self, tag, scroll_count=5):
         self.open_tabs(tag=tag, scroll_count=scroll_count)
         count = 0
@@ -224,13 +219,22 @@ class Insta(object):
         self.log('Liked {} in #{}'.format(count, tag))
         return count
 
-    def login(self, username='', password=''):
-        with open('user.json', 'r') as user_json:
-            user = json.loads(user_json.read())
+    def login(self, username=''):
+        if not username:
+            with open('user.json', 'r') as user_json:
+                user = json.loads(user_json.read())
+            username = user['username']
+            password = user['password']
+        else:
+            user = (session.query(IUser)
+                                .filter(IUser._user==username)
+                                .first())
+            password = user.get_password()
         
+        self.user = username
         self.driver.find_element_by_link_text('Log in').click()
-        self.driver.find_element_by_name('username').send_keys(user['username'])
-        self.driver.find_element_by_name('password').send_keys(user['password'])
+        self.driver.find_element_by_name('username').send_keys(username)
+        self.driver.find_element_by_name('password').send_keys(password)
         self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]").click()
 
     def log(self, msg, err=None):
@@ -244,17 +248,6 @@ class Insta(object):
         with open('crawler.log', 'a') as log:
             log.write('{}: {}\n{}'.format(timestamp, msg, error_msg))
 
-
-def shuffle(lst):
-    new_lst = []
-    lst = copy.copy(lst)
-    while len(lst) > 1:
-        pos = int(round(random.random() * (len(lst)-1)))    
-        item = lst.pop(pos)
-        new_lst.append(item)
-
-    new_lst += lst
-    return new_lst
 
 if __name__ == '__main__':
     insta = Insta()

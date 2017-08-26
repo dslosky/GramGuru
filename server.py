@@ -3,7 +3,6 @@ import os
 import sys
 from multiprocessing import Process
 from worker import Worker
-import random
 
 class Server(object):
 
@@ -12,7 +11,6 @@ class Server(object):
         self.stop_loop = False
         self.stop_server = False
         self.sleep = 5
-        self.next_run_time = 0
         
     def loop(self):
         """
@@ -24,18 +22,10 @@ class Server(object):
             time.sleep(self.sleep)
 
     def main(self):
-        # check database for users that need processing
-
-        # spin a new process that will go and find their info and run the names
-        # I'll just use a time trigger for now...
-        if time.time() > self.next_run_time:
-            self.last_run_time = time.time()
-            w = Worker()
-            p = Process(target=w.run_likes)
-            p.start()
-
-            # average next run time is 1 hour, but partially randomize
-            self.next_run_time = time.time() + 2700 + (1800 * random.random())
+        # spin up a new worker and let it look for jobs
+        w = Worker()
+        p = Process(target=w.run)
+        p.start()
 
     def stop(self):
         """

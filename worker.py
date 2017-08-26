@@ -1,26 +1,156 @@
-from crawler import Insta, shuffle
 import time
 import json
+
+from orm import *
+from crawler import Insta
+from util import shuffle, Configs, rando_hour
+
+CONFIGS = Configs()
 
 class Worker(object):
     def __init__(self):
         pass
 
-    def run_likes(self):
-        insta = Insta()
-        insta.login()
-        time.sleep(1)
+    def get_jobs(self):
+        now = time.time()
 
-        # get tags, these will come from the db
-        with open('user.json', 'r') as user_json:
-            user = json.loads(user_json.read())
+        # grab all jobs ready to run from users that don't have any
+        # jobs currently running. This should be editted to only grab 
+        # unique usernames, so don't grab two jobs for the same user at once
+        jobs = (session.query(Job)
+                            .filter(Job.run < now)
+                            .filter(not_(Job.running))
+                            .filter(not_(Job.finished))
+                            .filter(not_(Job.i_user.has(IUser.jobs.any(Job.running == True))))
+                            .filter(Job.i_user.has(
+                                        IUser.user.has(
+                                            User.payments.any(Payment.paid_through > now)
+                                        )
+                                    ))
+                            .order_by(Job.run)
+                            .all())
 
-        tags = shuffle(user['tags'])
-        like_count = 0
-        for tag in tags:
-            insta.search(tag)
-            like_count += insta.like_tag(tag)
-            time.sleep(5)
+        # filter jobs for the same username
+        filter_jobs = [job for idx, job in enumerate(jobs) 
+                                if job.i_user not in 
+                                        [job.i_user for job in  jobs[idx + 1:]]]
+
+        # return 3 jobs max
+        return jobs[:3]
+
+    def run(self):
+        jobs = self.get_jobs()
+
+        # Quickly let the database know which jobs we're taking
+        for job in jobs:
+            job.running = True
+            job.start_time = time.time()
+        session.commit()
+
+        for job in jobs:
+            if job.type == 'like':
+                # new thread eventually
+                self.run_like(job)
+            elif job.type == 'follow':
+                # new thread eventually
+                self.run_follow(job)
+            elif job.type == 'unfollow':
+                # new thread eventually
+                self.run_unfollow(job)
+
+        # thread.pool
+        return
+
+    def run_like(self, job):
+        count = 0
+        try:
+            insta = Insta()
+            insta.login(username=job._user)
+            time.sleep(1)
+
+            # get users tags and shuffles them
+            tag_names = [str(tag) for tag in job.i_user.tags]
+            tags = shuffle(tag_names)
+            for tag in tags:
+                insta.search(tag)
+                count += insta.like_tag(tag)
+                time.sleep(5)
+
+        except Exception as e:
+            job.error = '{}: {}'.format(type(e), e)
 
         insta.driver.quit()
-        return like_count
+        job.count = count
+        job.end_time = time.time()
+        job.running = False
+        job.finished = True
+        
+        # new run for jobs
+        new_job = Job(type='like', run=time.time() + rando_hour())
+        new_job.i_user = job.i_user
+        session.add(new_job)
+        session.commit()
+
+        return
+
+    def run_follow(self, job):
+        users = []
+        try:
+            insta = Insta()
+            insta.login(username=job._user)
+            time.sleep(1)
+
+            # get users tags and shuffles them
+            tag_names = [str(tag) for tag in job.i_user.tags]
+            tags = shuffle(tag_names)
+            for tag in tags:
+                insta.search(tag)
+                users, finished = insta.follow(tag)
+                if finished is True:
+                    break
+                time.sleep(5)
+
+        except Exception as e:
+            job.error = '{}: {}'.format(type(e), e)
+
+
+        insta.driver.quit()
+        job.count = len(users)
+        job.end_time = time.time()
+        job.running = False
+        job.finished = True
+
+        # new run for jobs
+        new_job = Job(type='follow', run=time.time() + (1.5 * rando_hour()))
+        new_job.i_user = job.i_user
+        session.add(new_job)
+        session.commit()
+
+        return
+
+    def run_unfollow(self, job):
+        count = 0
+        try:
+            insta = Insta()
+            insta.login(username=job._user)
+            time.sleep(1)
+
+            # get users to unfollow
+            following = job.i_user.following[:15]
+            deleted = insta.unfollow(following=following)
+        except Exception as e:
+            job.error = '{}: {}'.format(type(e), e)
+
+        insta.driver.quit()
+        job.count = count
+        job.end_time = time.time()
+        job.running = False
+        job.finished = True
+
+        # new run for job
+        new_job = Job(type='unfollow', run=time.time() + rando_hour())
+        new_job.i_user = job.i_user
+        session.add(new_job)
+        session.commit()
+
+        return
