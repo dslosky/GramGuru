@@ -59,7 +59,7 @@ class Worker(object):
             self.threads.append(thread)
             thread.start()
 
-        for thread in threads:
+        for thread in self.threads:
             thread.pool()
         return
 
