@@ -20,9 +20,9 @@ engine = create_engine(CONFIGS['database'])
 
 class User(Base):
     __tablename__ = 'users'
-    email = Column(String)
-    username = Column(String, primary_key=True)
-    password = Column(String)
+    email = Column(String(50))
+    username = Column(String(50), primary_key=True)
+    password = Column(String(255))
 
     def set_password(self, password):
         self.password = generate_password_hash(password, method='pbkdf2:sha512')
@@ -37,10 +37,10 @@ class User(Base):
 class Payment(Base):
     __tablename__ = 'payments'
     id = Column(Integer, primary_key=True)
-    _user = Column(String, ForeignKey('users.username'))
+    _user = Column(String(50), ForeignKey('users.username'))
     timestamp = Column(Integer)
     amount = Column(Float)
-    paid_through = Column(Integer)
+    paid_through = Column(Float)
 
     user = relationship("User", backref=backref('payments'))
 
@@ -52,10 +52,9 @@ class Payment(Base):
 
 class IUser(Base):
     __tablename__ = 'i_users'
-    id = Column(Integer, primary_key=True)
-    _user = Column(String, ForeignKey('users.username'))
-    username = Column(String)
-    password = Column(String)
+    username = Column(String(50), primary_key=True)
+    password = Column(String(255))
+    _user = Column(String(50), ForeignKey('users.username'))
 
     user = relationship("User", backref=backref('i_users'))
 
@@ -77,8 +76,8 @@ class IUser(Base):
 class Job(Base):
     __tablename__ = 'jobs'
     id = Column(Integer, primary_key=True)
-    type = Column(String)
-    _user = Column(String, ForeignKey('i_users.username'))
+    type = Column(String(16))
+    _user = Column(String(50), ForeignKey('i_users.username'))
     run = Column(Integer)
     start_time = Column(Integer)
     end_time = Column(Integer)
@@ -102,8 +101,8 @@ class Job(Base):
 class Following(Base):
     __tablename__ = 'following'
     id = Column(Integer, primary_key=True)
-    _user = Column(String, ForeignKey('i_users.username'))
-    other_user = Column(String)
+    _user = Column(String(50), ForeignKey('i_users.username'))
+    other_user = Column(String(50))
     timestamp = Column(Integer)
 
     i_user = relationship("IUser", backref=backref('following', order_by=timestamp))
@@ -116,8 +115,8 @@ class Following(Base):
 class Tag(Base):
     __tablename__ = 'tags'
     id = Column(Integer, primary_key=True)
-    _user = Column(String, ForeignKey('i_users.username'))
-    tag = Column(String)
+    _user = Column(String(50), ForeignKey('i_users.username'))
+    tag = Column(String(50))
 
     i_user = relationship("IUser", backref=backref('tags'))
 

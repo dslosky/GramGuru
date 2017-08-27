@@ -142,7 +142,7 @@ class Worker(object):
             job.error = '{}: {}'.format(type(e), e)
 
         insta.driver.quit()
-        job.count = count
+        job.count = len(deleted)
         job.end_time = time.time()
         job.running = False
         job.finished = True
