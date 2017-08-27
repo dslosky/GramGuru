@@ -20,6 +20,7 @@ engine = create_engine(CONFIGS['database'])
 
 class User(Base):
     __tablename__ = 'users'
+    email = Column(String)
     username = Column(String, primary_key=True)
     password = Column(String)
 

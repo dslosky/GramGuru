@@ -5,8 +5,13 @@ from multiprocessing import Process
 from worker import Worker
 
 class Server(object):
+    '''
+    Runs a loop that generates workers as new processes. These workers get 
+    tasks from the database, and will just die if no tasks are available.
 
-    
+    run from the command line in the background:
+    python server.py &
+    '''
     def __init__(self):
         self.stop_loop = False
         self.stop_server = False
@@ -22,21 +27,22 @@ class Server(object):
             time.sleep(self.sleep)
 
     def main(self):
-        # spin up a new worker and let it look for jobs
+        '''
+        Spins up a new worker to look for jobs
+        '''
+
         w = Worker()
         p = Process(target=w.run)
         p.start()
+        return
 
     def stop(self):
         """
-        Stop server loop; It will be restarted immediately. This
-        functionality could be used to reload functions in the event
-        of an update
+        Stop the server
         """
         
         self.stop_loop = True
-        return {'status': 'finished',
-                'message': 'Stopping loop...'}
+        return
 
             
 if __name__ == '__main__':

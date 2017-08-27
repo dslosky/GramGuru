@@ -4,6 +4,7 @@ import json
 from orm import *
 from crawler import Insta
 from util import shuffle, Configs, rando_hour
+from threading import Thread
 
 CONFIGS = Configs()
 
@@ -40,24 +41,24 @@ class Worker(object):
     def run(self):
         jobs = self.get_jobs()
 
-        # Quickly let the database know which jobs we're taking
+        # Let the database know which jobs we're taking
         for job in jobs:
             job.running = True
             job.start_time = time.time()
         session.commit()
 
+        # run each job in a seperate thread
         for job in jobs:
             if job.type == 'like':
-                # new thread eventually
-                self.run_like(job)
+                thread = Thread(target=self.run_like, args=[job])
             elif job.type == 'follow':
-                # new thread eventually
-                self.run_follow(job)
+                thread = Thread(target=self.run_follow, args=[job])
             elif job.type == 'unfollow':
-                # new thread eventually
-                self.run_unfollow(job)
+                thread = Thread(target=self.run_unfollow, args=[job])
 
-        # thread.pool
+            thread.start()
+
+        # thread.pool?
         return
 
     def run_like(self, job):
