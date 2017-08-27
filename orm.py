@@ -68,8 +68,7 @@ class IUser(Base):
         return f.decrypt(self.password).decode()
 
     def __repr__(self):
-        return 'IUser(id={}, user={}, username={}, password={})'.format(self.id,
-                                                                            self._user, 
+        return 'IUser(id={}, user={}, username={}, password={})'.format(self._user, 
                                                                             self.username, 
                                                                             bool(self.password))
 
