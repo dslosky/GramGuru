@@ -1,7 +1,7 @@
 from sqlalchemy import  (MetaData, create_engine, Column, 
                         String, Integer, Float, Boolean, Text,
                         ForeignKey, not_, and_)
-from sqlalchemy.orm import sessionmaker, Session, relationship, backref
+from sqlalchemy.orm import sessionmaker, Session, scoped_session, relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -160,5 +160,6 @@ def create_user_from_config(file='user.json'):
     return u
 
 db_sql = metadata.create_all(engine)
-Session = sessionmaker(bind=engine)
+session_factory = sessionmaker(bind=some_engine)
+Session = scoped_session(session_factory)
 session = Session()

@@ -7,6 +7,7 @@ from util import shuffle, Configs, rando_hour, log
 from threading import Thread
 
 CONFIGS = Configs()
+session = Session()
 
 class Worker(object):
     def __init__(self):
@@ -51,14 +52,17 @@ class Worker(object):
             # run each job in a seperate thread
             for job in jobs:
                 if job.type == 'like':
-                    thread = Thread(target=self.run_like, args=[job])
+                    #thread = Thread(target=self.run_like, args=[job])
+                    self.run_like(job)
                 elif job.type == 'follow':
-                    thread = Thread(target=self.run_follow, args=[job])
+                    #thread = Thread(target=self.run_follow, args=[job])
+                    self.run_follow(job)
                 elif job.type == 'unfollow':
-                    thread = Thread(target=self.run_unfollow, args=[job])
+                    #thread = Thread(target=self.run_unfollow, args=[job])
+                    self.run_unfollow(job)
 
-                self.threads.append(thread)
-                thread.start()
+                #self.threads.append(thread)
+                #thread.start()
         except Exception as e:
             log(msg='Worker error', err=e)
 
