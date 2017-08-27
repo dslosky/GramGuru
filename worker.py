@@ -33,10 +33,10 @@ class Worker(object):
         # filter jobs for the same username
         filter_jobs = [job for idx, job in enumerate(jobs) 
                                 if job.i_user not in 
-                                        [job.i_user for job in  jobs[idx + 1:]]]
+                                        [j.i_user for j in  jobs[idx + 1:]]]
 
         # return 3 jobs max
-        return jobs[:3]
+        return filter_jobs[:3]
 
     def run(self):
         jobs = self.get_jobs()
