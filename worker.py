@@ -82,7 +82,6 @@ class Worker(object):
         except Exception as e:
             job.error = '{}: {}'.format(type(e), e)
 
-        insta.driver.quit()
         job.count = count
         job.end_time = time.time()
         job.running = False
@@ -94,6 +93,7 @@ class Worker(object):
         session.add(new_job)
         session.commit()
 
+        insta.driver.quit()
         return
 
     def run_follow(self, job):
@@ -116,8 +116,6 @@ class Worker(object):
         except Exception as e:
             job.error = '{}: {}'.format(type(e), e)
 
-
-        insta.driver.quit()
         job.count = len(users)
         job.end_time = time.time()
         job.running = False
@@ -129,6 +127,7 @@ class Worker(object):
         session.add(new_job)
         session.commit()
 
+        insta.driver.quit()
         return
 
     def run_unfollow(self, job):
@@ -144,7 +143,6 @@ class Worker(object):
         except Exception as e:
             job.error = '{}: {}'.format(type(e), e)
 
-        insta.driver.quit()
         job.count = len(deleted)
         job.end_time = time.time()
         job.running = False
@@ -156,4 +154,5 @@ class Worker(object):
         session.add(new_job)
         session.commit()
 
+        insta.driver.quit()
         return
