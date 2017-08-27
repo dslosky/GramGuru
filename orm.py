@@ -160,6 +160,6 @@ def create_user_from_config(file='user.json'):
     return u
 
 db_sql = metadata.create_all(engine)
-session_factory = sessionmaker(bind=some_engine)
+session_factory = sessionmaker(bind=engine)
 Session = scoped_session(session_factory)
 session = Session()
