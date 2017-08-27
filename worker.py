@@ -10,7 +10,7 @@ CONFIGS = Configs()
 
 class Worker(object):
     def __init__(self):
-        pass
+        self.threads = []
 
     def get_jobs(self):
         now = time.time()
@@ -56,9 +56,11 @@ class Worker(object):
             elif job.type == 'unfollow':
                 thread = Thread(target=self.run_unfollow, args=[job])
 
+            self.threads.append(thread)
             thread.start()
 
-        # thread.pool?
+        for thread in threads:
+            thread.pool()
         return
 
     def run_like(self, job):
