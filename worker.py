@@ -3,7 +3,7 @@ import json
 
 from orm import *
 from crawler import Insta
-from util import shuffle, Configs, rando_hour
+from util import shuffle, Configs, rando_hour, log
 from threading import Thread
 
 CONFIGS = Configs()
@@ -39,28 +39,29 @@ class Worker(object):
         return filter_jobs[:3]
 
     def run(self):
-        jobs = self.get_jobs()
+        try:
+            jobs = self.get_jobs()
 
-        # Let the database know which jobs we're taking
-        for job in jobs:
-            job.running = True
-            job.start_time = time.time()
-        session.commit()
+            # Let the database know which jobs we're taking
+            for job in jobs:
+                job.running = True
+                job.start_time = time.time()
+            session.commit()
 
-        # run each job in a seperate thread
-        for job in jobs:
-            if job.type == 'like':
-                thread = Thread(target=self.run_like, args=[job])
-            elif job.type == 'follow':
-                thread = Thread(target=self.run_follow, args=[job])
-            elif job.type == 'unfollow':
-                thread = Thread(target=self.run_unfollow, args=[job])
+            # run each job in a seperate thread
+            for job in jobs:
+                if job.type == 'like':
+                    thread = Thread(target=self.run_like, args=[job])
+                elif job.type == 'follow':
+                    thread = Thread(target=self.run_follow, args=[job])
+                elif job.type == 'unfollow':
+                    thread = Thread(target=self.run_unfollow, args=[job])
 
-            self.threads.append(thread)
-            thread.start()
+                self.threads.append(thread)
+                thread.start()
+        except Exception as e:
+            log(msg='Worker error', err=e)
 
-        for thread in self.threads:
-            thread.pool()
         return
 
     def run_like(self, job):

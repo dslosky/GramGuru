@@ -9,7 +9,7 @@ import random
 import sys
 
 from orm import *
-from util import shuffle, Configs
+from util import shuffle, Configs, log
 CONFIG = Configs()
 
 class Insta(object):
@@ -121,7 +121,7 @@ class Insta(object):
                 f.i_user = user
                 f.other_user = user
 
-        self.log('Followed {} in #{}'.format(len(new_follows), tag))
+        log('Followed {} in #{}'.format(len(new_follows), tag))
         return new_follows, finished
 
     def is_following(self):
@@ -179,7 +179,7 @@ class Insta(object):
 
         session.commit()
 
-        self.log('Unfollowed {} people'.format(delete_count))
+        log('Unfollowed {} people'.format(delete_count))
         return deleted
 
     def like_feed(self, scroll_count=2):
@@ -192,7 +192,7 @@ class Insta(object):
             actionChains.double_click(pic).perform()
             time.sleep(2)
 
-        self.log('Liked {} in feed'.format(len(pics)))
+        log('Liked {} in feed'.format(len(pics)))
         return len(pics)
 
     def like_tag(self, tag, scroll_count=5):
@@ -216,7 +216,7 @@ class Insta(object):
 
         self.driver.switch_to_window(self.main_handle)
 
-        self.log('Liked {} in #{}'.format(count, tag))
+        log('Liked {} in #{}'.format(count, tag))
         return count
 
     def login(self, username=''):
@@ -236,18 +236,6 @@ class Insta(object):
         self.driver.find_element_by_name('username').send_keys(username)
         self.driver.find_element_by_name('password').send_keys(password)
         self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]").click()
-
-    def log(self, msg, err=None):
-        timestamp = (datetime.datetime.fromtimestamp(time.time())
-                                        .strftime('%Y-%m-%d %H:%M:%S'))
-        if err is not None:
-            error_msg = 'ERROR: {}: {}\n'.format(type(err), err)
-        else:
-            error_msg = ''
-
-        with open('crawler.log', 'a') as log:
-            log.write('{}: {}\n{}'.format(timestamp, msg, error_msg))
-
 
 if __name__ == '__main__':
     insta = Insta()

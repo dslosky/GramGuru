@@ -47,3 +47,14 @@ def rando_hour():
     Generate a random time between 45 and 75 mins
     '''
     return 2700 + (1800 * random.random())
+
+def log(msg, err=None):
+    timestamp = (datetime.datetime.fromtimestamp(time.time())
+                                    .strftime('%Y-%m-%d %H:%M:%S'))
+    if err is not None:
+        error_msg = 'ERROR: {}: {}\n'.format(type(err), err)
+    else:
+        error_msg = ''
+
+    with open('crawler.log', 'a') as log:
+        log.write('{}: {}\n{}'.format(timestamp, msg, error_msg))
