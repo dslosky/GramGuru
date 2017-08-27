@@ -131,7 +131,7 @@ class Worker(object):
         return
 
     def run_unfollow(self, job):
-        count = 0
+        deleted = []
         try:
             insta = Insta()
             insta.login(username=job._user)
@@ -142,6 +142,9 @@ class Worker(object):
             deleted = insta.unfollow(following=following)
         except Exception as e:
             job.error = '{}: {}'.format(type(e), e)
+        
+
+        session.commit()
 
         job.count = len(deleted)
         job.end_time = time.time()
