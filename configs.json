@@ -17,5 +17,5 @@
     ],
     "database": "sqlite:///insta.db",
     "pageLimit": 10,
-    "encryptionKey": "ua7GNwxSppAKoHNTiHV78D2Ggr7QDNxWaPPIeUg4cPI="
+    "encryptionKey": ""
 }
