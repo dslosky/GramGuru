@@ -7,6 +7,7 @@ from util import shuffle, Configs, rando_hour, log
 from threading import Thread
 
 CONFIGS = Configs()
+WEEK = 60 * 60 * 24 * 7
 session = Session()
 
 class Worker(object):
@@ -143,7 +144,9 @@ class Worker(object):
 
             # get users to unfollow
             following = job.i_user.following[:15]
-            deleted = insta.unfollow(following=following)
+            filtered_following = [f for f in iu.following if 
+                                    f.timestamp < time.time() - WEEK]
+            deleted = insta.unfollow(following=filtered_following)
         except Exception as e:
             job.error = '{}: {}'.format(type(e), e)
         
