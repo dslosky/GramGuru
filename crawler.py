@@ -115,7 +115,7 @@ class Insta(object):
             i_user = (session.query(IUser)
                         .filter(IUser.username == self.user)
                         .first())
-            for user in following:
+            for user in new_follows:
                 f = Following()
                 f.timestamp = time.time()
                 f.i_user = user
