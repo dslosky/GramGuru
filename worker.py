@@ -103,6 +103,7 @@ class Worker(object):
 
     def run_follow(self, job):
         users = []
+        count = 0
         try:
             insta = Insta()
             insta.login(username=job._user)
@@ -114,6 +115,7 @@ class Worker(object):
             for tag in tags:
                 insta.search(tag)
                 users, finished = insta.follow(tag)
+                count += len(users)
                 if finished is True:
                     break
                 time.sleep(5)
@@ -121,7 +123,7 @@ class Worker(object):
         except Exception as e:
             job.error = '{}: {}'.format(type(e), e)
 
-        job.count = len(users)
+        job.count = count
         job.end_time = time.time()
         job.running = False
         job.finished = True
