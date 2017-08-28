@@ -7,26 +7,27 @@ import datetime
 import json
 import random
 import sys
-import copy
+
+from orm import *
+from util import shuffle, Configs, log
+CONFIG = Configs()
 
 class Insta(object):
     def __init__(self):
         # load settings
-        with open('configs.json', 'r') as configs:
-            conf = json.loads(configs.read())
-        
+
         # load the driver
-        if conf['browser'] == 'chrome':
+        if CONFIG['browser'] == 'chrome':
             self.driver = webdriver.Chrome()
-        elif conf['browser'] == 'phantomjs':
+        elif CONFIG['browser'] == 'phantomjs':
             self.driver = webdriver.PhantomJS()
         else:
             raise Exception('No browser configured; add one to configs.json')
         
         # open instagram
+        self.user = None
         self.driver.get('https://instagram.com')
         self.main_handle = self.driver.window_handles[0]
-        self.configs = conf
 
     def search(self, tag):
         self.driver.get('https://www.instagram.com/explore/tags/' + tag + '/')
@@ -54,15 +55,24 @@ class Insta(object):
         links = shuffle(links)
 
         # set a page limit to avoid overclocking
-        page_limit = min(self.configs['pageLimit'], len(links))
+        page_limit = min(CONFIGS['pageLimit'], len(links))
         for a in links[:page_limit]:
-            if a.get_attribute('href') not in self.configs['avoidUrls']:
+            if a.get_attribute('href') not in CONFIGS['avoidUrls']:
                 try:
                     self.driver.execute_script('window.open("' + a.get_attribute('href') + '","_blank");')
                 except Exception as e:
                     pass
         # wait for all the tabs to open
         time.sleep(2)
+
+    def close_open_tabs(self):
+        for window in self.driver.window_handles:
+            if window != self.main_handle:
+                try:
+                    self.driver.execute_script('window.close()')
+                except:
+                    # window already deleted
+                    pass
 
     def follow(self, tag):
         '''
@@ -72,19 +82,20 @@ class Insta(object):
     
         # scroll to the tabs and follow everyone
         new_follows = []
+        finished = False
         for window in self.driver.window_handles:
             if window != self.main_handle:
                 self.driver.switch_to_window(window)
                 time.sleep(1)
 
-                if self.is_following():
+                if self.is_following() or not self.can_follow():
                     # skip this one, we're already following
+                    self.driver.execute_script('window.close()')
                     continue
                 else:
                     button = self.driver.find_element_by_xpath("//*[contains(text(), 'Follow')]")
                     actionChains = ActionChains(self.driver)
                     actionChains.click(button).perform()
-                    button.click()
                     time.sleep(2)
 
                 if self.is_following():
@@ -94,6 +105,9 @@ class Insta(object):
                                         .get_attribute('text'))]
                 else:
                     # maxed out follows, time to quit
+                    finished = True
+                    # close the tabs
+                    self.close_open_tabs()
                     break
                 
                 # close the window
@@ -102,62 +116,74 @@ class Insta(object):
         self.driver.switch_to_window(self.main_handle)
 
         if len(new_follows) > 0:
-            with open('following.json', 'r') as file_:
-                following = json.loads(file_.read())
-                following['following'] += new_follows
-                following['following'] = list(set(following['following']))
+            i_user = (session.query(IUser)
+                        .filter(IUser.username == self.user)
+                        .first())
+            for user in new_follows:
+                f = Following()
+                f.timestamp = time.time()
+                f.i_user = i_user
+                f.other_user = user
 
-            with open('following.json', 'w') as file_:
-                file_.write(json.dumps(following, indent=4))
-
-        self.log('Followed {} in #{}'.format(len(new_follows), tag))
-        return new_follows
+        log('Followed {} in #{}'.format(len(new_follows), tag))
+        return new_follows, finished
 
     def is_following(self):
+        '''
+        Check if this user is already being followed
+        '''
         try:
             self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
         except:
             return False
         return True
 
-    def unfollow(self, stop=50):
-        with open('following.json', 'r') as file_:
-            current_lst = json.loads(file_.read())
-            failed = current_lst['failedToDelete']
+    def can_follow(self):
+        '''
+        Check if there is an option to follow available
+        '''
+        try:
+            self.driver.find_element_by_xpath("//*[contains(text(), 'Follow')]")
+        except:
+            return False
+        return True
+
+    def unfollow(self, following=None):
         deleted = []
         delete_count = 0
-        for user in current_lst['following']:
-            self.driver.get('https://www.instagram.com/' + user + '/')
+        for follow in following:
+            self.driver.get('https://www.instagram.com/' + follow.other_user + '/')
             time.sleep(2)
             if self.is_following():
                 button = self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
                 actionChains = ActionChains(self.driver)
                 actionChains.click(button).perform()
-
+                time.sleep(1)
+                self.driver.get('https://www.instagram.com/' + follow.other_user + '/')
                 time.sleep(2)
                 if self.is_following():
-                    # the unfollow didn't work, time to stop
-                    failed += [user]
-                    break
-                else:
-                    deleted += [user]
-                    delete_count += 1
-
-                    if delete_count > stop:
+                    # the unfollow didn't work
+                    try:
+                        self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]").click()
+                        # can't unfollow, time to stop
                         break
+                    except:
+                        # Looks like it might be okay
+                        deleted += [follow]
+                        delete_count += 1
+                else:
+                    deleted += [follow]
+                    delete_count += 1
             else:
-                deleted += [user]
+                deleted += [follow]
+        
+        # remove deleted follows from the database
+        for follow in deleted:
+            session.delete(follow)
 
-        leftover = []
-        for name in current_lst['following']:
-            if name not in deleted:
-                leftover += [name]
+        session.commit()
 
-        failed_json = json.dumps({"following": leftover, "failedToDelete": failed}, indent=4)
-        with open('following.json', 'w') as file_:
-            file_.write(failed_json)
-
-        self.log('Unfollowed {} people'.format(len(deleted)))
+        log('Unfollowed {} people'.format(delete_count))
         return deleted
 
     def like_feed(self, scroll_count=2):
@@ -170,8 +196,9 @@ class Insta(object):
             actionChains.double_click(pic).perform()
             time.sleep(2)
 
-        self.log('Liked {} in feed'.format(len(pics)))
+        log('Liked {} in feed'.format(len(pics)))
         return len(pics)
+
     def like_tag(self, tag, scroll_count=5):
         self.open_tabs(tag=tag, scroll_count=scroll_count)
         count = 0
@@ -193,40 +220,26 @@ class Insta(object):
 
         self.driver.switch_to_window(self.main_handle)
 
-        self.log('Liked {} in #{}'.format(count, tag))
+        log('Liked {} in #{}'.format(count, tag))
         return count
 
-    def login(self, username='', password=''):
-        with open('user.json', 'r') as user_json:
-            user = json.loads(user_json.read())
-        
-        self.driver.find_element_by_link_text('Log in').click()
-        self.driver.find_element_by_name('username').send_keys(user['username'])
-        self.driver.find_element_by_name('password').send_keys(user['password'])
-        self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]").click()
-
-    def log(self, msg, err=None):
-        timestamp = (datetime.datetime.fromtimestamp(time.time())
-                                        .strftime('%Y-%m-%d %H:%M:%S'))
-        if err is not None:
-            error_msg = 'ERROR: {}: {}\n'.format(type(err), err)
+    def login(self, username=''):
+        if not username:
+            with open('user.json', 'r') as user_json:
+                user = json.loads(user_json.read())
+            username = user['username']
+            password = user['password']
         else:
-            error_msg = ''
-
-        with open('crawler.log', 'a') as log:
-            log.write('{}: {}\n{}'.format(timestamp, msg, error_msg))
-
-
-def shuffle(lst):
-    new_lst = []
-    lst = copy.copy(lst)
-    while len(lst) > 1:
-        pos = int(round(random.random() * (len(lst)-1)))    
-        item = lst.pop(pos)
-        new_lst.append(item)
-
-    new_lst += lst
-    return new_lst
+            user = (session.query(IUser)
+                                .filter(IUser._user==username)
+                                .first())
+            password = user.get_password()
+        
+        self.user = username
+        self.driver.find_element_by_link_text('Log in').click()
+        self.driver.find_element_by_name('username').send_keys(username)
+        self.driver.find_element_by_name('password').send_keys(password)
+        self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]").click()
 
 if __name__ == '__main__':
     insta = Insta()
@@ -240,20 +253,39 @@ if __name__ == '__main__':
 
     if sys.argv[1] == 'like':
         for tag in tags:
-            insta.search(tag)
-            insta.like_tag(tag)
+            try:
+                insta.search(tag)
+                insta.like_tag(tag)
+            except Exception as e:
+                msg = 'Like failed on #{}'.format(tag)
+                insta.log(msg=msg, err=e)
             time.sleep(5)
 
     elif sys.argv[1] == 'feed':
-        insta.like_feed()
+        try:
+            insta.like_feed()
+        except Exception as e:
+            msg = 'Feed failed'
+            insta.log(msg=msg, err=e)
 
     elif sys.argv[1] == 'follow':
         for tag in tags:
-            insta.search(tag)
-            insta.follow(tag)
-            time.sleep(5)
+            try:
+                insta.search(tag)
+                users, finished = insta.follow(tag)
+                if finished is True:
+                    break
+
+                time.sleep(5)
+            except Exception as e:
+                msg = 'Follow failed on #{}'.format(tag)
+                insta.log(msg=msg, err=e)
 
     elif sys.argv[1] == 'unfollow':
-        insta.unfollow()
+        try:
+            insta.unfollow()
+        except Exception as e:
+            msg = 'Unfollow failed'
+            insta.log(msg=msg, err=e)
 
     insta.driver.quit()

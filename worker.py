@@ -1,26 +1,168 @@
-from crawler import Insta, shuffle
 import time
 import json
 
+from orm import *
+from crawler import Insta
+from util import shuffle, Configs, rando_hour, log
+from threading import Thread
+
+CONFIGS = Configs()
+WEEK = 60 * 60 * 24 * 7
+session = Session()
+
 class Worker(object):
     def __init__(self):
-        pass
+        self.threads = []
 
-    def run_likes(self):
-        insta = Insta()
-        insta.login()
-        time.sleep(1)
+    def get_jobs(self):
+        now = time.time()
 
-        # get tags, these will come from the db
-        with open('user.json', 'r') as user_json:
-            user = json.loads(user_json.read())
+        # grab all jobs ready to run from users that don't have any
+        # jobs currently running.
+        jobs = (session.query(Job)
+                            .filter(Job.run < now)
+                            .filter(not_(Job.running))
+                            .filter(not_(Job.finished))
+                            .filter(not_(Job.i_user.has(IUser.jobs.any(Job.running == True))))
+                            .filter(Job.i_user.has(
+                                        IUser.user.has(
+                                            User.payments.any(Payment.paid_through > now)
+                                        )
+                                    ))
+                            .order_by(Job.run)
+                            .all())
 
-        tags = shuffle(user['tags'])
-        like_count = 0
-        for tag in tags:
-            insta.search(tag)
-            like_count += insta.like_tag(tag)
-            time.sleep(5)
+        # filter jobs for the same username
+        filter_jobs = [job for idx, job in enumerate(jobs) 
+                                if job.i_user not in 
+                                        [j.i_user for j in  jobs[idx + 1:]]]
+
+        # return 3 jobs max
+        return filter_jobs[:3]
+
+    def run(self):
+        try:
+            jobs = self.get_jobs()
+
+            # Let the database know which jobs we're taking
+            for job in jobs:
+                job.running = True
+                job.start_time = time.time()
+            session.commit()
+
+            # run each job in a seperate thread
+            for job in jobs:
+                if job.type == 'like':
+                    #thread = Thread(target=self.run_like, args=[job])
+                    self.run_like(job)
+                elif job.type == 'follow':
+                    #thread = Thread(target=self.run_follow, args=[job])
+                    self.run_follow(job)
+                elif job.type == 'unfollow':
+                    #thread = Thread(target=self.run_unfollow, args=[job])
+                    self.run_unfollow(job)
+
+                #self.threads.append(thread)
+                #thread.start()
+        except Exception as e:
+            log(msg='Worker error', err=e)
+
+        return
+
+    def run_like(self, job):
+        count = 0
+        try:
+            insta = Insta()
+            insta.login(username=job._user)
+            time.sleep(1)
+
+            # get users tags and shuffles them
+            tag_names = [str(tag) for tag in job.i_user.tags]
+            tags = shuffle(tag_names)
+            for tag in tags:
+                insta.search(tag)
+                count += insta.like_tag(tag)
+                time.sleep(5)
+
+        except Exception as e:
+            job.error = '{}: {}'.format(type(e), e)
+
+        job.count = count
+        job.end_time = time.time()
+        job.running = False
+        job.finished = True
+        
+        # new run for jobs
+        new_job = Job(type='like', run=time.time() + rando_hour())
+        new_job.i_user = job.i_user
+        session.add(new_job)
+        session.commit()
 
         insta.driver.quit()
-        return like_count
+        return
+
+    def run_follow(self, job):
+        users = []
+        try:
+            insta = Insta()
+            insta.login(username=job._user)
+            time.sleep(1)
+
+            # get users tags and shuffles them
+            tag_names = [str(tag) for tag in job.i_user.tags]
+            tags = shuffle(tag_names)
+            for tag in tags:
+                insta.search(tag)
+                users, finished = insta.follow(tag)
+                if finished is True:
+                    break
+                time.sleep(5)
+
+        except Exception as e:
+            job.error = '{}: {}'.format(type(e), e)
+
+        job.count = len(users)
+        job.end_time = time.time()
+        job.running = False
+        job.finished = True
+
+        # new run for jobs
+        new_job = Job(type='follow', run=time.time() + (1.5 * rando_hour()))
+        new_job.i_user = job.i_user
+        session.add(new_job)
+        session.commit()
+
+        insta.driver.quit()
+        return
+
+    def run_unfollow(self, job):
+        deleted = []
+        try:
+            insta = Insta()
+            insta.login(username=job._user)
+            time.sleep(1)
+
+            # get users to unfollow
+            following = job.i_user.following[:15]
+            filtered_following = [f for f in following if 
+                                    f.timestamp < time.time() - WEEK]
+            deleted = insta.unfollow(following=filtered_following)
+        except Exception as e:
+            job.error = '{}: {}'.format(type(e), e)
+        
+
+        session.commit()
+
+        job.count = len(deleted)
+        job.end_time = time.time()
+        job.running = False
+        job.finished = True
+
+        # new run for job
+        new_job = Job(type='unfollow', run=time.time() + rando_hour())
+        new_job.i_user = job.i_user
+        session.add(new_job)
+        session.commit()
+
+        insta.driver.quit()
+        return

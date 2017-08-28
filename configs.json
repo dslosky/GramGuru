@@ -1,17 +1,21 @@
 {
     "browser": "chrome",
+    "avoidUrls": [
+        "https://www.instagram.com/",
+        "https://www.instagram.com/accounts/emailsignup/",
+        "https://www.instagram.com/accounts/login/",
+        "https://www.instagram.com/about/us/",
+        "https://help.instagram.com/",
+        "http://blog.instagram.com/",
+        "https://instagram-press.com/",
+        "https://www.instagram.com/developer/",
+        "https://www.instagram.com/about/jobs/",
+        "https://www.instagram.com/legal/privacy/",
+        "https://www.instagram.com/legal/terms/",
+        "https://www.instagram.com/explore/locations/",
+        "https://www.instagram.com/accounts/emailsignup/"
+    ],
+    "database": "sqlite:///insta.db",
     "pageLimit": 10,
-    "avoidUrls": ["https://www.instagram.com/", 
-                                            "https://www.instagram.com/accounts/emailsignup/", 
-                                            "https://www.instagram.com/accounts/login/", 
-                                            "https://www.instagram.com/about/us/", 
-                                            "https://help.instagram.com/", 
-                                            "http://blog.instagram.com/", 
-                                            "https://instagram-press.com/", 
-                                            "https://www.instagram.com/developer/", 
-                                            "https://www.instagram.com/about/jobs/", 
-                                            "https://www.instagram.com/legal/privacy/", 
-                                            "https://www.instagram.com/legal/terms/", 
-                                            "https://www.instagram.com/explore/locations/", 
-                                            "https://www.instagram.com/accounts/emailsignup/"]
+    "encryptionKey": ""
 }
