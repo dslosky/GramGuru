@@ -144,7 +144,7 @@ class Worker(object):
 
             # get users to unfollow
             following = job.i_user.following[:15]
-            filtered_following = [f for f in iu.following if 
+            filtered_following = [f for f in following if 
                                     f.timestamp < time.time() - WEEK]
             deleted = insta.unfollow(following=filtered_following)
         except Exception as e:
