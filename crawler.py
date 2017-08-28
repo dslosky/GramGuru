@@ -68,7 +68,11 @@ class Insta(object):
     def close_open_tabs(self):
         for window in self.driver.window_handles:
             if window != self.main_handle:
-                self.driver.execute_script('window.close()')
+                try:
+                    self.driver.execute_script('window.close()')
+                except:
+                    # window already deleted
+                    pass
 
     def follow(self, tag):
         '''
