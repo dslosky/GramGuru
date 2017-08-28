@@ -118,7 +118,7 @@ class Insta(object):
             for user in new_follows:
                 f = Following()
                 f.timestamp = time.time()
-                f.i_user = user
+                f.i_user = i_user
                 f.other_user = user
 
         log('Followed {} in #{}'.format(len(new_follows), tag))
