@@ -69,8 +69,8 @@ class IUser(Base):
 
     def __repr__(self):
         return 'IUser(user={}, username={}, password={})'.format(self._user, 
-                                                                            self.username, 
-                                                                            bool(self.password))
+                                                                    self.username, 
+                                                                    bool(self.password))
 
 class Job(Base):
     __tablename__ = 'jobs'
