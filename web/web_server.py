@@ -30,8 +30,6 @@ def index():
 
 @app.route('/register', methods=['POST'])
 def register():
-    import pdb
-    pdb.set_trace()
     username=request.form['username']
     password=request.form['password']
     tags = request.form['tags'].split(',')
