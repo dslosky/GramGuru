@@ -1,7 +1,12 @@
 asn1crypto==0.22.0
 cffi==1.10.0
+click==6.7
 cryptography==2.0.3
+Flask==0.12.2
 idna==2.6
+itsdangerous==0.24
+Jinja2==2.9.6
+MarkupSafe==1.0
 pycparser==2.18
 selenium==3.5.0
 six==1.10.0

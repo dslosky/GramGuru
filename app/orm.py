@@ -68,9 +68,9 @@ class IUser(Base):
         return f.decrypt(self.password).decode()
 
     def __repr__(self):
-        return 'IUser(id={}, user={}, username={}, password={})'.format(self._user, 
-                                                                            self.username, 
-                                                                            bool(self.password))
+        return 'IUser(user={}, username={}, password={})'.format(self._user, 
+                                                                    self.username, 
+                                                                    bool(self.password))
 
 class Job(Base):
     __tablename__ = 'jobs'
@@ -137,26 +137,32 @@ def create_i_user(username, password, tags=None):
                 Job(type='unfollow', run=time.time() + (3600 * 24 * 7))]
     i.jobs = jobs
 
-    for tag in tags:
-        t = Tag()
-        t.tag = tag
-        i.tags.append(t)
+    if tags is not None:
+        for tag in tags:
+            t = Tag()
+            t.tag = tag
+            i.tags.append(t)
 
     return i
+
+def create_user(username, password, tags=None):
+    u = User()
+    u.username = username
+    u.set_password(password)
+
+    i = create_i_user(username,password,tags=tags)
+    u.i_users.append(i)
+
+    # ****** REPLACE WITH ACTUAL PAYMENT INFO *******
+    p = Payment(paid_through=time.time()*100)
+    u.payments.append(p)
+    return u
 
 def create_user_from_config(file='user.json'):
     with open('user.json', 'r') as file_:
         user = json.loads(file_.read())
 
-    u = User()
-    u.username = user['username']
-    u.set_password(user['password'])
-
-    i = create_i_user(user['username'],user['password'],tags=user['tags'])
-    u.i_users.append(i)
-
-    p = Payment(paid_through=time.time()*100)
-    u.payments.append(p)
+    u = create_user(user['username'], user['password'], user['tags'])
     return u
 
 db_sql = metadata.create_all(engine)

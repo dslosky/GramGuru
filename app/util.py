@@ -6,12 +6,13 @@ import time
 import datetime
 import random
 import copy
+import os, sys
 
 class Configs(dict):
     def __init__(self,*arg,**kw):
         super(Configs, self).__init__(*arg, **kw)
     
-        with open('configs.json', 'r') as f_:
+        with open(app_path() + os.sep + 'configs.json', 'r') as f_:
             configs = json.loads(f_.read())
 
         for key, value in configs.items():
@@ -27,7 +28,7 @@ class Configs(dict):
 
     def save(self):
         self['encryptionKey'] = self['encryptionKey'].decode()
-        with open('configs.json', 'w') as file_:
+        with open(app_path() + os.sep + 'configs.json', 'w') as file_:
             file_.write(json.dumps(self, indent=4))
 
         self['encryptionKey'] = self['encryptionKey'].encode()
@@ -59,3 +60,9 @@ def log(msg, err=None):
 
     with open('crawler.log', 'a') as log:
         log.write('{}: {}\n{}'.format(timestamp, msg, error_msg))
+
+def app_path():
+    path = os.path.dirname(os.path.abspath(__file__))
+    path = path.split(os.sep)
+    directory = os.path.normpath(os.sep.join(path))
+    return directory
