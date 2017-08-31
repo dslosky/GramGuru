@@ -28,6 +28,18 @@ app.config['SESSION_TYPE'] = 'filesystem'
 def index():
     return render_template('index.html')
 
+@app.route('/register', methods=['POST'])
+def register():
+    import pdb
+    pdb.set_trace()
+    username=request.form['username']
+    password=request.form['password']
+    tags = request.form['tags'].split(',')
+    u = create_user(username, password, tags=tags)
+
+    session.add(u)
+    session.commit()
+
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('index.html')
