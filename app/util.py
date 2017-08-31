@@ -28,7 +28,7 @@ class Configs(dict):
 
     def save(self):
         self['encryptionKey'] = self['encryptionKey'].decode()
-        with open('configs.json', 'w') as file_:
+        with open(app_path() + os.sep + 'configs.json', 'w') as file_:
             file_.write(json.dumps(self, indent=4))
 
         self['encryptionKey'] = self['encryptionKey'].encode()

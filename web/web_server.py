@@ -39,6 +39,7 @@ def register():
 
     session.add(u)
     session.commit()
+    return render_template('registered.html')
 
 @app.errorhandler(404)
 def page_not_found(error):
