@@ -125,7 +125,7 @@ class Insta(object):
                 f.i_user = i_user
                 f.other_user = user
 
-        log('Followed {} in #{}'.format(len(new_follows), tag))
+        log('Followed {} in #{} for '.format(len(new_follows), tag, self.user))
         return new_follows, finished
 
     def is_following(self):
@@ -183,7 +183,7 @@ class Insta(object):
 
         session.commit()
 
-        log('Unfollowed {} people'.format(delete_count))
+        log('Unfollowed {} people for {}'.format(delete_count, self.user))
         return deleted
 
     def like_feed(self, scroll_count=2):
@@ -196,7 +196,7 @@ class Insta(object):
             actionChains.double_click(pic).perform()
             time.sleep(2)
 
-        log('Liked {} in feed'.format(len(pics)))
+        log('Liked {} in feed for {}'.format(len(pics), self.user))
         return len(pics)
 
     def like_tag(self, tag, scroll_count=5):
@@ -220,7 +220,7 @@ class Insta(object):
 
         self.driver.switch_to_window(self.main_handle)
 
-        log('Liked {} in #{}'.format(count, tag))
+        log('Liked {} in #{} for {}'.format(count, tag, self.user))
         return count
 
     def login(self, username=''):
@@ -242,33 +242,33 @@ class Insta(object):
         self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]").click()
 
 if __name__ == '__main__':
+    username = sys.argv[1]
+    user = session.query(IUser).filter(IUser.username == username)
     insta = Insta()
-    insta.login()
+    insta.login(username=username)
     time.sleep(1)
 
-    with open('user.json', 'r') as user_json:
-        user = json.loads(user_json.read())
+    tag_names = [t.tag for t in user.tags]
+    tags = shuffle(tag_names)
 
-    tags = shuffle(user['tags'])
-
-    if sys.argv[1] == 'like':
+    if sys.argv[2] == 'like':
         for tag in tags:
             try:
                 insta.search(tag)
                 insta.like_tag(tag)
             except Exception as e:
                 msg = 'Like failed on #{}'.format(tag)
-                insta.log(msg=msg, err=e)
+                log(msg=msg, err=e)
             time.sleep(5)
 
-    elif sys.argv[1] == 'feed':
+    elif sys.argv[2] == 'feed':
         try:
             insta.like_feed()
         except Exception as e:
             msg = 'Feed failed'
-            insta.log(msg=msg, err=e)
+            log(msg=msg, err=e)
 
-    elif sys.argv[1] == 'follow':
+    elif sys.argv[2] == 'follow':
         for tag in tags:
             try:
                 insta.search(tag)
@@ -279,13 +279,13 @@ if __name__ == '__main__':
                 time.sleep(5)
             except Exception as e:
                 msg = 'Follow failed on #{}'.format(tag)
-                insta.log(msg=msg, err=e)
+                log(msg=msg, err=e)
 
-    elif sys.argv[1] == 'unfollow':
+    elif sys.argv[2] == 'unfollow':
         try:
             insta.unfollow()
         except Exception as e:
             msg = 'Unfollow failed'
-            insta.log(msg=msg, err=e)
+            log(msg=msg, err=e)
 
     insta.driver.quit()
