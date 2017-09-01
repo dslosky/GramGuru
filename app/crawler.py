@@ -125,7 +125,7 @@ class Insta(object):
                 f.i_user = i_user
                 f.other_user = user
 
-        log('Followed {} in #{} for '.format(len(new_follows), tag, self.user))
+        log('Followed {} in #{} for {}'.format(len(new_follows), tag, self.user))
         return new_follows, finished
 
     def is_following(self):
