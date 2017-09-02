@@ -58,7 +58,7 @@ def log(msg, err=None):
     else:
         error_msg = ''
 
-    with open('crawler.log', 'a') as log:
+    with open(app_path() + os.sep + 'crawler.log', 'a') as log:
         log.write('{}: {}\n{}'.format(timestamp, msg, error_msg))
 
 def app_path():
