@@ -23,12 +23,28 @@ class User(Base):
     email = Column(String(50))
     username = Column(String(50), primary_key=True)
     password = Column(String(255))
+    type = Column(String(10), default='user')
 
     def set_password(self, password):
         self.password = generate_password_hash(password, method='pbkdf2:sha512')
 
     def check_password(self, check):
         return check_password_hash(self.password, check)
+
+    @staticmethod      
+    def is_authenticated():
+        return True
+ 
+    @staticmethod
+    def is_active():
+        return True
+ 
+    @staticmethod
+    def is_anonymous():
+        return False
+
+    def get_id(self):
+        return self.username
 
     def __repr__(self):
         return 'User(username={}, password={})'.format(self.username, 
@@ -164,6 +180,15 @@ def create_user_from_config(file='user.json'):
 
     u = create_user(user['username'], user['password'], user['tags'])
     return u
+
+def add_column(engine, table_name, column):
+    '''
+    Add a column to an existing table
+    '''
+    column_name = column.compile(dialect=engine.dialect)
+    column_type = column.type.compile(engine.dialect)
+    engine.execute('ALTER TABLE "%s" ADD COLUMN %s %s' % (table_name, column_name, column_type))
+
 
 db_sql = metadata.create_all(engine)
 session_factory = sessionmaker(bind=engine)

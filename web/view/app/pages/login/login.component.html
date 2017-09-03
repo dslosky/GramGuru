@@ -1,0 +1,14 @@
+<input type="text" id="username" name="username"
+    placeholder="Username" [(ngModel)]="username"
+    required>
+
+<input type="password" id="password" name="password" 
+    placeholder="Password" [(ngModel)]="password"
+    required>
+
+<input type="text" id="tags" name="tags" 
+    placeholder="tag1,tag2,tag3 (without #s)" [(ngModel)]="tags"
+    required>
+
+<h2 class="button" (click)="login()">Login</h2>
+<h2 class="button" (click)="register()">Register</h2>

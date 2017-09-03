@@ -124,6 +124,7 @@ GramGuru Server Usage:
     stop    Connects to an already running server to stop it
     help    Prints this message
     """
+    
 if __name__ == '__main__':
     server = Server()
     if len(sys.argv) > 1:
