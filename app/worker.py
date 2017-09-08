@@ -8,18 +8,18 @@ from threading import Thread
 
 CONFIGS = Configs()
 WEEK = 60 * 60 * 24 * 7
-session = Session()
 
 class Worker(object):
     def __init__(self):
         self.threads = []
 
-    def get_jobs(self):
+    def get_job(self):
         now = time.time()
 
-        # grab all jobs ready to run from users that don't have any
+        # grab a job ready to run from users that don't have any
         # jobs currently running.
-        jobs = (session.query(Job)
+        session.commit()
+        job = (session.query(Job)
                             .filter(Job.run < now)
                             .filter(not_(Job.running))
                             .filter(not_(Job.finished))
@@ -30,43 +30,31 @@ class Worker(object):
                                         )
                                     ))
                             .order_by(Job.run)
-                            .all())
+                            .first)
 
-        # filter jobs for the same username
-        filter_jobs = [job for idx, job in enumerate(jobs) 
-                                if job.i_user not in 
-                                        [j.i_user for j in  jobs[idx + 1:]]]
-
-        # return 3 jobs max
-        return filter_jobs[:3]
+        return job
 
     def run(self):
+        session = Session()
         try:
-            jobs = self.get_jobs()
+            job = self.get_job()
 
             # Let the database know which jobs we're taking
-            for job in jobs:
-                job.running = True
-                job.start_time = time.time()
+            job.running = True
+            job.start_time = time.time()
             session.commit()
 
-            # run each job in a seperate thread
-            for job in jobs:
-                if job.type == 'like':
-                    #thread = Thread(target=self.run_like, args=[job])
-                    self.run_like(job)
-                elif job.type == 'follow':
-                    #thread = Thread(target=self.run_follow, args=[job])
-                    self.run_follow(job)
-                elif job.type == 'unfollow':
-                    #thread = Thread(target=self.run_unfollow, args=[job])
-                    self.run_unfollow(job)
+            if job.type == 'like':
+                self.run_like(job)
+            elif job.type == 'follow':
+                self.run_follow(job)
+            elif job.type == 'unfollow':
+                self.run_unfollow(job)
 
-                #self.threads.append(thread)
-                #thread.start()
         except Exception as e:
             log(msg='Worker error', err=e)
 
+        Session.remove()
         return
 
     def run_like(self, job):
@@ -145,7 +133,7 @@ class Worker(object):
             time.sleep(1)
 
             # get users to unfollow
-            following = job.i_user.following[:15]
+            following = job.i_user.following[:5]
             filtered_following = [f for f in following if 
                                     f.timestamp < time.time() - WEEK]
             deleted = insta.unfollow(following=filtered_following)

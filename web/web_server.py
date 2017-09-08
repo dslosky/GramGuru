@@ -97,6 +97,8 @@ def register():
     session.add(user)
     session.commit()
 
+    login_user(user)
+
     user = current_user.__dict__.copy()
     user.pop('_sa_instance_state', None)
     return jsonify(success=True, user=user)

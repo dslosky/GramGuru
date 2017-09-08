@@ -10,6 +10,8 @@ export class LoginComponent {
     public username: string = ''
     public password: string = ''
     public tags: string = ''
+    public selected: string = 'login'
+
     constructor(private loginService: LoginService) {}
 
     login() {
