@@ -7,6 +7,14 @@ import datetime
 import random
 import copy
 import os, sys
+import stripe
+
+path = os.path.dirname(os.path.abspath(__file__))
+path = path.split(os.sep)
+path += ['secret_stripe_key']
+secret_key_file = os.path.normpath(os.sep.join(path))
+with open(secret_key_file, 'r') as key:
+    stripe.api_key = key.read()
 
 class Configs(dict):
     def __init__(self,*arg,**kw):

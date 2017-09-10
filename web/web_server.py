@@ -13,7 +13,7 @@ if directory not in sys.path:
 
 # import database connection
 from orm import *
-from util import app_path
+from util import app_path, stripe
 
 def web_path():
     path = os.path.dirname(os.path.abspath(__file__))
@@ -103,9 +103,32 @@ def register():
     user.pop('_sa_instance_state', None)
     return jsonify(success=True, user=user)
 
-@app.route('/payment', methods=['POST'])
-def payment():
-    pass
+@app.route('/charge', methods=['POST'])
+def charge():
+    session = Session()
+    sub_type = request.json.get('type', '')
+    token = request.json.get('token', '')
+
+    user = (session.query(User)
+                .filter(User.username == current_user.username)
+                .first())
+
+    if user.stripe_id is None:
+        # Create a Customer:
+        customer = stripe.Customer.create(
+            email=user.email,
+            source=token['id'],
+        )
+
+        user.stripe_id = customer.id
+
+    user.subscription = sub_type
+    user.setup_payments()
+    session.commit()
+
+
+    Session.remove()
+    return jsonify(success=True)
 
 #@app.errorhandler(404)
 #def page_not_found(error):

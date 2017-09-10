@@ -9,6 +9,7 @@ from cryptography.fernet import Fernet
 import base64
 import json
 import time
+from util import stripe
 
 from util import Configs, rando_hour
 CONFIGS = Configs()
@@ -23,6 +24,8 @@ class User(Base):
     email = Column(String(50))
     username = Column(String(50), primary_key=True)
     password = Column(String(255))
+    stripe_id = Column(String(255))
+    subscription = Column(String(255))
     type = Column(String(10), default='user')
 
     def set_password(self, password):
@@ -30,6 +33,24 @@ class User(Base):
 
     def check_password(self, check):
         return check_password_hash(self.password, check)
+
+    def charge(self, amount):
+        charge = stripe.Charge.create(
+            amount=amount,
+            currency="usd",
+            customer=self.stripe_id
+        )
+
+    def setup_payments(self):
+        session = Session()
+        job = Job(type='charge', run=time.time())
+        job._user = self.username
+        session.add(job)
+        session.commit()
+        Session.remove()
+
+    def cancel_subscription(self):
+        self.subscription = 'none'
 
     @staticmethod      
     def is_authenticated():
@@ -55,7 +76,7 @@ class Payment(Base):
     id = Column(Integer, primary_key=True)
     _user = Column(String(50), ForeignKey('users.username'))
     timestamp = Column(Integer)
-    amount = Column(Float)
+    amount = Column(Integer)
     paid_through = Column(Float)
 
     user = relationship("User", backref=backref('payments'))
@@ -169,9 +190,6 @@ def create_user(username, password, tags=None):
     i = create_i_user(username,password,tags=tags)
     u.i_users.append(i)
 
-    # ****** REPLACE WITH ACTUAL PAYMENT INFO *******
-    p = Payment(paid_through=time.time()*100)
-    u.payments.append(p)
     return u
 
 def create_user_from_config(file='user.json'):
@@ -193,4 +211,3 @@ def add_column(engine, table_name, column):
 db_sql = metadata.create_all(engine)
 session_factory = sessionmaker(bind=engine)
 Session = scoped_session(session_factory)
-session = Session()

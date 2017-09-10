@@ -16,6 +16,7 @@ import { AdminComponent } from './pages/admin/admin.component';
 import { PurchaseComponent } from './pages/purchase/purchase.component';
 
 import { LoginService } from './pages/login/login.service';
+import { PurchaseService } from './pages/purchase/purchase.service';
 
 @NgModule({
   imports: [
@@ -38,7 +39,8 @@ import { LoginService } from './pages/login/login.service';
   ],
   providers: [
     appRoutingProviders,
-    LoginService
+    LoginService,
+    PurchaseService
   ],
   bootstrap: [ AppComponent ]
 })
