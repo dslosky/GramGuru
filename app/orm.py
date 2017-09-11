@@ -227,7 +227,7 @@ def dbconnect(func):
             raise
         finally:
             session.expunge_all()
-            Session.close()
+            Session.remove()
         return return_val
     return inner
 
