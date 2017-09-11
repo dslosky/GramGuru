@@ -59,7 +59,7 @@ class Worker(object):
                 job.running = True
                 job.start_time = time.time()
                 session.commit()
-                refresh(job)
+                refresh(job, session)
                 session.expunge(job)
 
                 if job.type == 'like':
