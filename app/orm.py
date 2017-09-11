@@ -226,6 +226,7 @@ def dbconnect(func):
             session.rollback()
             raise
         finally:
+            session.expunge_all()
             Session.close()
         return return_val
     return inner
