@@ -75,7 +75,7 @@ class Insta(object):
                     pass
 
 
-    def follow(self, tag, session=None):
+    def follow(self, tag):
         '''
         Follow users found by searching for a specific tag
         '''
@@ -116,18 +116,7 @@ class Insta(object):
 
         self.driver.switch_to_window(self.main_handle)
 
-        if len(new_follows) > 0:
-            i_user = (session.query(IUser)
-                        .filter(IUser.username == self.user)
-                        .first())
-            for user in new_follows:
-                f = Following()
-                f.timestamp = time.time()
-                f.i_user = i_user
-                f.other_user = user
-
         log('Followed {} in #{} for {}'.format(len(new_follows), tag, self.user))
-        Session.close()
         return new_follows, finished
 
     def is_following(self):
@@ -150,18 +139,18 @@ class Insta(object):
             return False
         return True
     
-    def unfollow(self, session=None, following=None):
+    def unfollow(self, following=None):
         deleted = []
         delete_count = 0
         for follow in following:
-            self.driver.get('https://www.instagram.com/' + follow.other_user + '/')
+            self.driver.get('https://www.instagram.com/' + other_user + '/')
             time.sleep(2)
             if self.is_following():
                 button = self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
                 actionChains = ActionChains(self.driver)
                 actionChains.click(button).perform()
                 time.sleep(1)
-                self.driver.get('https://www.instagram.com/' + follow.other_user + '/')
+                self.driver.get('https://www.instagram.com/' + other_user + '/')
                 time.sleep(2)
                 if self.is_following():
                     # the unfollow didn't work
@@ -171,19 +160,15 @@ class Insta(object):
                         break
                     except:
                         # Looks like it might be okay
-                        deleted += [follow]
+                        deleted += [other_user]
                         delete_count += 1
                 else:
-                    deleted += [follow]
+                    deleted += [other_user]
                     delete_count += 1
             else:
-                deleted += [follow]
+                deleted += [other_user]
         
-        # remove deleted follows from the database
-        for follow in deleted:
-            session.delete(follow)
-
-        session.commit()
+        
         log('Unfollowed {} people for {}'.format(delete_count, self.user))
         return deleted
 
@@ -225,17 +210,12 @@ class Insta(object):
         return count
 
 
-    def login(self, username='', session=None):
+    def login(self, username='', password=''):
         if not username:
             with open('user.json', 'r') as user_json:
                 user = json.loads(user_json.read())
             username = user['username']
             password = user['password']
-        else:
-            user = (session.query(IUser)
-                                .filter(IUser._user==username)
-                                .first())
-            password = user.get_password()
         
         self.user = username
         self.driver.find_element_by_link_text('Log in').click()

@@ -11,7 +11,8 @@ def like(job, session=None):
     count = 0
     try:
         insta = Insta()
-        insta.login(username=job._user)
+        insta.login(username=job.i_user.username,
+                    password=job.i_user.get_password())
         time.sleep(1)
 
         # get users tags and shuffles them
@@ -40,7 +41,7 @@ def like(job, session=None):
     return job
 
 def follow(job, session=None):
-    users = []
+    new_users = []
     count = 0
     try:
         insta = Insta()
@@ -54,6 +55,7 @@ def follow(job, session=None):
             insta.search(tag)
             users, finished = insta.follow(tag)
             count += len(users)
+            new_users += users
             if finished is True:
                 break
             time.sleep(5)
@@ -61,6 +63,15 @@ def follow(job, session=None):
     except Exception as e:
         job.error = '{}: {}'.format(type(e), e)
 
+    if len(new_follows) > 0:
+        for user in new_follows:
+            f = Following()
+            f.timestamp = time.time()
+            f.i_user = job.i_user
+            f.other_user = user
+            session.add(f)
+            
+    session.commit()
     job.count = count
     job.end_time = time.time()
     job.running = False
@@ -85,12 +96,19 @@ def unfollow(job, session=None):
 
         # get users to unfollow
         following = job.i_user.following[:5]
-        filtered_following = [f for f in following if 
+        filtered_following = [f.other_user for f in following if 
                                 f.timestamp < time.time() - WEEK]
         deleted = insta.unfollow(following=filtered_following)
     except Exception as e:
         job.error = '{}: {}'.format(type(e), e)
     
+    # remove deleted follows from the database
+    deleted_follows = (session.query(Following)
+                            .filter(Following._user == job._user)
+                            .filter(Following.other_user.in_(deleted))
+                            .all())
+    for follow in deleted_follows:
+        session.delete(follow)
 
     session.commit()
 
