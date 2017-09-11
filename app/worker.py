@@ -50,10 +50,10 @@ class Worker(object):
 
     @dbconnect
     def run(self, session=None):
-        session = Session()
         try:
             job = self.get_job()
             if job is not None:
+                job = session.merge(job)
                 # Let the database know which job we're taking
                 job.running = True
                 job.start_time = time.time()
