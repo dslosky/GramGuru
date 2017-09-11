@@ -11,7 +11,6 @@ class Worker(object):
     def __init__(self):
         self.threads = []
 
-    @dbconnect
     def get_job(self, session=None):
         now = time.time()
 
