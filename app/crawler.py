@@ -74,7 +74,8 @@ class Insta(object):
                     # window already deleted
                     pass
 
-    def follow(self, tag):
+    @dbconnect
+    def follow(self, tag, session=None):
         '''
         Follow users found by searching for a specific tag
         '''
@@ -126,6 +127,7 @@ class Insta(object):
                 f.other_user = user
 
         log('Followed {} in #{} for {}'.format(len(new_follows), tag, self.user))
+        Session.close()
         return new_follows, finished
 
     def is_following(self):
@@ -147,8 +149,9 @@ class Insta(object):
         except:
             return False
         return True
-
-    def unfollow(self, following=None):
+    
+    @dbconnect
+    def unfollow(self, session=None, following=None):
         deleted = []
         delete_count = 0
         for follow in following:
@@ -182,7 +185,6 @@ class Insta(object):
             session.delete(follow)
 
         session.commit()
-
         log('Unfollowed {} people for {}'.format(delete_count, self.user))
         return deleted
 
@@ -223,7 +225,8 @@ class Insta(object):
         log('Liked {} in #{} for {}'.format(count, tag, self.user))
         return count
 
-    def login(self, username=''):
+    @dbconnect
+    def login(self, username='', session=None):
         if not username:
             with open('user.json', 'r') as user_json:
                 user = json.loads(user_json.read())
@@ -242,6 +245,7 @@ class Insta(object):
         self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]").click()
 
 if __name__ == '__main__':
+    session = Session()
     username = sys.argv[1]
     user = session.query(IUser).filter(IUser.username == username)
     insta = Insta()
@@ -289,3 +293,4 @@ if __name__ == '__main__':
             log(msg=msg, err=e)
 
     insta.driver.quit()
+    Session.remove()

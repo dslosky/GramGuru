@@ -199,14 +199,35 @@ def create_user_from_config(file='user.json'):
     u = create_user(user['username'], user['password'], user['tags'])
     return u
 
-def add_column(engine, table_name, column):
+def add_column(engine, orm_obj, column):
     '''
     Add a column to an existing table
     '''
+    table_name = orm_obj.__table__.name
+    columns = [c.key for c in orm_obj.__table__.columns]
+
     column_name = column.compile(dialect=engine.dialect)
     column_type = column.type.compile(engine.dialect)
-    engine.execute('ALTER TABLE "%s" ADD COLUMN %s %s' % (table_name, column_name, column_type))
+    engine.execute('''
+    CREATE TABLE {0}_new LIKE {0};
+    ALTER TABLE {0}_new ADD COLUMN {1} {2};
+    INSERT INTO {0}_new ({3}) SELECT * FROM {0};
+    RENAME TABLE {0} TO {0}_old, {0}_new TO {0};
+    DROP TABLE {0}_old;
+    '''.format(table_name, column_name, column_type, ','.join(columns)))
 
+def dbconnect(func):
+    def inner(*args, **kwargs):
+        session = Session()  # with all the requirements
+        try:
+            func(*args, session=session, **kwargs)
+            session.commit()
+        except:
+            session.rollback()
+            raise
+        finally:
+            Session.close()
+    return inner
 
 db_sql = metadata.create_all(engine)
 session_factory = sessionmaker(bind=engine)

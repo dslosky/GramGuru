@@ -11,8 +11,8 @@ class Worker(object):
     def __init__(self):
         self.threads = []
 
-    def get_job(self):
-        session = Session()
+    @dbconnect
+    def get_job(self, session=None):
         now = time.time()
 
         # grab a job ready to run from users that don't have any
@@ -39,7 +39,6 @@ class Worker(object):
                             .filter(Job.type == 'charge')
                             .order_by(Job.run)
                             .first())
-        Session.remove()
 
         if job is None:
             return charge
@@ -49,7 +48,8 @@ class Worker(object):
             return charge
         return job
 
-    def run(self):
+    @dbconnect
+    def run(self, session=None):
         session = Session()
         try:
             job = self.get_job()
@@ -70,6 +70,4 @@ class Worker(object):
 
         except Exception as e:
             log(msg='Worker error', err=e)
-
-        Session.remove()
         return

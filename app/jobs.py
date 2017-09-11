@@ -5,10 +5,10 @@ from crawler import Insta
 from util import shuffle, rando_hour, log
 
 WEEK = 60 * 60 * 24 * 7
-#MONTH = 60 * 60 * 24 * 31
-MONTH = 60 * 5
+MONTH = 60 * 60 * 24 * 31
 
-def like(job):
+@dbconnect
+def like(job, session=None):
     session = Session()
     job = session.merge(job)
 
@@ -44,8 +44,8 @@ def like(job):
     Session.remove()
     return job
 
-def follow(job):
-    session = Session()
+@dbconnect
+def follow(job, session=None):
     job = session.merge(job)
 
     users = []
@@ -81,11 +81,10 @@ def follow(job):
     session.commit()
 
     insta.driver.quit()
-    Session.remove()
     return job
 
-def unfollow(job):
-    session = Session()
+@dbconnect
+def unfollow(job, session=None):
     job = session.merge(job)
     
     deleted = []
@@ -117,12 +116,10 @@ def unfollow(job):
     session.commit()
 
     insta.driver.quit()
-
-    Session.remove()
     return job
 
-def charge(job):
-    session = Session()
+@dbconnect
+def charge(job, session=None):
     job = session.merge(job)
     
     p = Payment()
@@ -165,5 +162,4 @@ def charge(job):
         session.add(new_job)
         session.commit()
 
-    Session.remove()
     return job
