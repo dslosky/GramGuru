@@ -143,14 +143,14 @@ class Insta(object):
         deleted = []
         delete_count = 0
         for follow in following:
-            self.driver.get('https://www.instagram.com/' + other_user + '/')
+            self.driver.get('https://www.instagram.com/' + follow + '/')
             time.sleep(2)
             if self.is_following():
                 button = self.driver.find_element_by_xpath("//*[contains(text(), 'Following')]")
                 actionChains = ActionChains(self.driver)
                 actionChains.click(button).perform()
                 time.sleep(1)
-                self.driver.get('https://www.instagram.com/' + other_user + '/')
+                self.driver.get('https://www.instagram.com/' + follow + '/')
                 time.sleep(2)
                 if self.is_following():
                     # the unfollow didn't work
@@ -160,13 +160,13 @@ class Insta(object):
                         break
                     except:
                         # Looks like it might be okay
-                        deleted += [other_user]
+                        deleted += [follow]
                         delete_count += 1
                 else:
-                    deleted += [other_user]
+                    deleted += [follow]
                     delete_count += 1
             else:
-                deleted += [other_user]
+                deleted += [follow]
         
         
         log('Unfollowed {} people for {}'.format(delete_count, self.user))

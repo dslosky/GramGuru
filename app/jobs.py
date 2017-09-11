@@ -45,7 +45,8 @@ def follow(job, session=None):
     count = 0
     try:
         insta = Insta()
-        insta.login(username=job._user)
+        insta.login(username=job.i_user.username,
+                    password=job.i_user.get_password())
         time.sleep(1)
 
         # get users tags and shuffles them
@@ -86,12 +87,12 @@ def follow(job, session=None):
     insta.driver.quit()
     return job
 
-@dbconnect
 def unfollow(job, session=None):
     deleted = []
     try:
         insta = Insta()
-        insta.login(username=job._user)
+        insta.login(username=job.i_user.username,
+                    password=job.i_user.get_password())
         time.sleep(1)
 
         # get users to unfollow
@@ -126,7 +127,6 @@ def unfollow(job, session=None):
     insta.driver.quit()
     return job
 
-@dbconnect
 def charge(job, session=None):
     p = Payment()
     try:
