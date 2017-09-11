@@ -45,6 +45,8 @@ class Worker(object):
             return job
         if charge.run < job.run:
             return charge
+
+        session.expunge(job)
         return job
 
     @dbconnect
