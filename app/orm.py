@@ -226,10 +226,21 @@ def dbconnect(func):
             session.rollback()
             raise
         finally:
+            refresh(return_val, session=session)
             session.expunge_all()
             Session.remove()
         return return_val
     return inner
+
+def refresh(obj, session=None):
+    if isinstance(obj, Base):
+        session.refresh(obj)
+    elif isinstance(obj, list):
+        for o in obj:
+            if isinstance(obj, Base):
+                session.refresh(obj)
+    elif isinstance(obj, dict):
+        pass
 
 db_sql = metadata.create_all(engine)
 session_factory = sessionmaker(bind=engine)
