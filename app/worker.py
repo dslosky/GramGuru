@@ -54,10 +54,13 @@ class Worker(object):
             job = self.get_job()
             if job is not None:
                 job = session.merge(job)
+                session.commit()
                 # Let the database know which job we're taking
                 job.running = True
                 job.start_time = time.time()
                 session.commit()
+                refresh(job)
+                session.expunge(job)
 
                 if job.type == 'like':
                     jobs.like(job)

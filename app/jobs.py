@@ -9,8 +9,8 @@ MONTH = 60 * 60 * 24 * 31
 
 @dbconnect
 def like(job, session=None):
-    session = Session()
     job = session.merge(job)
+    session.commit()
 
     count = 0
     try:
@@ -41,12 +41,12 @@ def like(job, session=None):
     session.commit()
 
     insta.driver.quit()
-    Session.remove()
     return job
 
 @dbconnect
 def follow(job, session=None):
     job = session.merge(job)
+    session.commit()
 
     users = []
     count = 0
@@ -86,6 +86,7 @@ def follow(job, session=None):
 @dbconnect
 def unfollow(job, session=None):
     job = session.merge(job)
+    session.commit()
     
     deleted = []
     try:
@@ -121,6 +122,7 @@ def unfollow(job, session=None):
 @dbconnect
 def charge(job, session=None):
     job = session.merge(job)
+    session.commit()
     
     p = Payment()
     try:
