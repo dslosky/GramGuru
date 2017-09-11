@@ -1,6 +1,6 @@
 from sqlalchemy import  (MetaData, create_engine, Column, 
                         String, Integer, Float, Boolean, Text,
-                        ForeignKey, not_, and_, in_)
+                        ForeignKey, not_, and_)
 from sqlalchemy.orm import sessionmaker, Session, scoped_session, relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 
