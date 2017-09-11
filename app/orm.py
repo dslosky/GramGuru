@@ -220,13 +220,14 @@ def dbconnect(func):
     def inner(*args, **kwargs):
         session = Session()  # with all the requirements
         try:
-            func(*args, session=session, **kwargs)
+            return_val = func(*args, session=session, **kwargs)
             session.commit()
         except:
             session.rollback()
             raise
         finally:
             Session.close()
+        return return_val
     return inner
 
 db_sql = metadata.create_all(engine)

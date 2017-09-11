@@ -17,7 +17,6 @@ class Worker(object):
 
         # grab a job ready to run from users that don't have any
         # jobs currently running.
-        session.commit()
         job = (session.query(Job)
                             .filter(Job.run < now)
                             .filter(not_(Job.running))
