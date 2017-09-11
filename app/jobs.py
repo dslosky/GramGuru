@@ -41,7 +41,7 @@ def like(job, session=None):
     return job
 
 def follow(job, session=None):
-    new_users = []
+    new_follows = []
     count = 0
     try:
         insta = Insta()
@@ -55,7 +55,7 @@ def follow(job, session=None):
             insta.search(tag)
             users, finished = insta.follow(tag)
             count += len(users)
-            new_users += users
+            new_follows += users
             if finished is True:
                 break
             time.sleep(5)
@@ -70,7 +70,7 @@ def follow(job, session=None):
             f.i_user = job.i_user
             f.other_user = user
             session.add(f)
-            
+
     session.commit()
     job.count = count
     job.end_time = time.time()
