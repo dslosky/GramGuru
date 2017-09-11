@@ -51,24 +51,21 @@ class Worker(object):
     @dbconnect
     def run(self, session=None):
         try:
-            job = self.get_job()
+            job = self.get_job(session=session)
             if job is not None:
-                job = session.merge(job)
-                session.commit()
                 # Let the database know which job we're taking
                 job.running = True
+                job.start_time = time.time()
                 session.commit()
-                refresh(job, session)
-                session.expunge(job)
 
                 if job.type == 'like':
-                    jobs.like(job)
+                    jobs.like(job, session)
                 elif job.type == 'follow':
-                    jobs.follow(job)
+                    jobs.follow(job, session)
                 elif job.type == 'unfollow':
-                    jobs.unfollow(job)
+                    jobs.unfollow(job, session)
                 elif job.type == 'charge':
-                    jobs.charge(job)
+                    jobs.charge(job, session)
 
         except Exception as e:
             log(msg='Worker error', err=e)

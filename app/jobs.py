@@ -7,12 +7,7 @@ from util import shuffle, rando_hour, log
 WEEK = 60 * 60 * 24 * 7
 MONTH = 60 * 60 * 24 * 31
 
-@dbconnect
 def like(job, session=None):
-    job = session.merge(job)
-    job.start_time = time.time()
-    session.commit()
-
     count = 0
     try:
         insta = Insta()
@@ -44,12 +39,7 @@ def like(job, session=None):
     insta.driver.quit()
     return job
 
-@dbconnect
 def follow(job, session=None):
-    job = session.merge(job)
-    job.start_time = time.time()
-    session.commit()
-
     users = []
     count = 0
     try:
@@ -87,10 +77,6 @@ def follow(job, session=None):
 
 @dbconnect
 def unfollow(job, session=None):
-    job = session.merge(job)
-    job.start_time = time.time()
-    session.commit()
-    
     deleted = []
     try:
         insta = Insta()
@@ -124,10 +110,6 @@ def unfollow(job, session=None):
 
 @dbconnect
 def charge(job, session=None):
-    job = session.merge(job)
-    job.start_time = time.time()
-    session.commit()
-    
     p = Payment()
     try:
         user = job.i_user.user
