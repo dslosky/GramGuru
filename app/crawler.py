@@ -74,7 +74,7 @@ class Insta(object):
                     # window already deleted
                     pass
 
-    @dbconnect
+
     def follow(self, tag, session=None):
         '''
         Follow users found by searching for a specific tag
@@ -150,7 +150,6 @@ class Insta(object):
             return False
         return True
     
-    @dbconnect
     def unfollow(self, session=None, following=None):
         deleted = []
         delete_count = 0
@@ -225,7 +224,7 @@ class Insta(object):
         log('Liked {} in #{} for {}'.format(count, tag, self.user))
         return count
 
-    @dbconnect
+
     def login(self, username='', session=None):
         if not username:
             with open('user.json', 'r') as user_json:
