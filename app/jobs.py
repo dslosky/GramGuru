@@ -10,6 +10,7 @@ MONTH = 60 * 60 * 24 * 31
 @dbconnect
 def like(job, session=None):
     job = session.merge(job)
+    job.start_time = time.time()
     session.commit()
 
     count = 0
@@ -46,6 +47,7 @@ def like(job, session=None):
 @dbconnect
 def follow(job, session=None):
     job = session.merge(job)
+    job.start_time = time.time()
     session.commit()
 
     users = []
@@ -86,6 +88,7 @@ def follow(job, session=None):
 @dbconnect
 def unfollow(job, session=None):
     job = session.merge(job)
+    job.start_time = time.time()
     session.commit()
     
     deleted = []
@@ -122,6 +125,7 @@ def unfollow(job, session=None):
 @dbconnect
 def charge(job, session=None):
     job = session.merge(job)
+    job.start_time = time.time()
     session.commit()
     
     p = Payment()

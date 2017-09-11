@@ -57,7 +57,6 @@ class Worker(object):
                 session.commit()
                 # Let the database know which job we're taking
                 job.running = True
-                job.start_time = time.time()
                 session.commit()
                 refresh(job, session)
                 session.expunge(job)
