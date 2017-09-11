@@ -122,7 +122,7 @@ class Job(Base):
     count = Column(Integer)
     error = Column(Text)
 
-    i_user = relationship("IUser", backref=backref('jobs'))
+    i_user = relationship("IUser", backref=backref('jobs'), cascade="save-update, merge")
 
     def __repr__(self):
         return 'Job(type={},user={}, run={}, start_time={},\n \
