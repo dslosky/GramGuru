@@ -2,16 +2,16 @@ from sqlalchemy import  (MetaData, create_engine, Column,
                         String, Integer, Float, Boolean, Text,
                         ForeignKey, not_, and_)
 from sqlalchemy.orm import sessionmaker, Session, scoped_session, relationship, backref
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from cryptography.fernet import Fernet
 import base64
 import json
 import time
-from util import stripe
+import types
 
-from util import Configs, rando_hour
+from util import Configs, rando_hour, stripe
 CONFIGS = Configs()
 
 metadata = MetaData()
@@ -26,6 +26,7 @@ class User(Base):
     password = Column(String(255))
     stripe_id = Column(String(255))
     subscription = Column(String(255))
+    timestamp = Column(Integer)
     type = Column(String(10), default='user')
 
     def set_password(self, password):
@@ -163,6 +164,17 @@ class Tag(Base):
     def __str__(self):
         return self.tag
 
+class Subscription(Base):
+    __tablename__ = 'subscriptions'
+    name = Column(String(20), primary_key=True)
+    monthly = Column(Boolean)
+    amount = Column(Integer)
+
+    def __repr__(self):
+        return 'Subscription(name={}, monthly={}, amount={}'.format(self.name, 
+                                                            self.monthly,
+                                                            self.amount)
+
 def create_i_user(username, password, tags=None):
     i = IUser()
     i.username = username
@@ -185,6 +197,7 @@ def create_i_user(username, password, tags=None):
 def create_user(username, password, tags=None):
     u = User()
     u.username = username
+    u.timestamp = time.time()
     u.set_password(password)
 
     i = create_i_user(username,password,tags=tags)
@@ -199,27 +212,35 @@ def create_user_from_config(file='user.json'):
     u = create_user(user['username'], user['password'], user['tags'])
     return u
 
-def add_column(engine, orm_obj, column):
+def add_column(engine, orm_obj, column, sqlite=False):
     '''
     Add a column to an existing table
     '''
-    table_name = orm_obj.__table__.name
-    columns = [c.key for c in orm_obj.__table__.columns]
-
     column_name = column.compile(dialect=engine.dialect)
     column_type = column.type.compile(engine.dialect)
-    engine.execute('''
-    CREATE TABLE {0}_new LIKE {0};
-    ALTER TABLE {0}_new ADD COLUMN {1} {2};
-    INSERT INTO {0}_new ({3}) SELECT * FROM {0};
-    RENAME TABLE {0} TO {0}_old, {0}_new TO {0};
-    DROP TABLE {0}_old;
-    '''.format(table_name, column_name, column_type, ','.join(columns)))
+    table_name = orm_obj.__table__.name
+    if sqlite is False:
+        columns = [c.key for c in orm_obj.__table__.columns]
+        engine.execute('\
+        CREATE TABLE {0}_new LIKE {0};\
+        ALTER TABLE {0}_new ADD COLUMN {1} {2};\
+        INSERT INTO {0}_new ({3}) SELECT * FROM {0};\
+        RENAME TABLE {0} TO {0}_old, {0}_new TO {0};\
+        DROP TABLE {0}_old;\
+        '.format(table_name, column_name, column_type, ','.join(columns)))
+    else:
+        engine.execute('ALTER TABLE "{}" ADD COLUMN {} {};'.format(table_name, 
+                                                                    column_name,
+                                                                    column_type))
+    
+
+
 
 def dbconnect(func):
     def inner(*args, **kwargs):
         session = Session()  # with all the requirements
         try:
+            return_val = None
             return_val = func(*args, session=session, **kwargs)
             session.commit()
         except:
@@ -241,6 +262,33 @@ def refresh(obj, session=None):
                 session.refresh(obj)
     elif isinstance(obj, dict):
         pass
+
+
+class AlchemyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj.__class__, DeclarativeMeta):
+            # an SQLAlchemy class
+            fields = {}
+            for field in [x for x in dir(obj) if not x.startswith('_') and x != 'metadata']:
+                data = obj.__getattribute__(field)
+
+                if isinstance(data, types.MethodType):
+                    continue
+
+                try:
+                    json.dumps(data) # this will fail on non-encodable values, like other classes
+                    fields[field] = data
+                except TypeError:
+                    try:
+                        fields[field] = [str(d) for d in data]
+                    except:
+                        fields[field] = None
+                except UnicodeEncodeError:
+                    fields[field] = 'Non-encodable'
+            # a json-encodable dict
+            return fields
+    
+        return json.JSONEncoder.default(self, obj)
 
 db_sql = metadata.create_all(engine)
 session_factory = sessionmaker(bind=engine)

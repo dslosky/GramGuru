@@ -2,10 +2,8 @@ import time
 
 from orm import *
 from crawler import Insta
-from util import shuffle, rando_hour, log
+from util import shuffle, rando_hour, log, WEEK, MONTH
 
-WEEK = 60 * 60 * 24 * 7
-MONTH = 60 * 60 * 24 * 31
 
 def like(job, session=None):
     count = 0

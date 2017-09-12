@@ -17,6 +17,7 @@ import { PurchaseComponent } from './pages/purchase/purchase.component';
 
 import { LoginService } from './pages/login/login.service';
 import { PurchaseService } from './pages/purchase/purchase.service';
+import { AdminService } from './pages/admin/admin.service';
 
 @NgModule({
   imports: [
@@ -40,7 +41,8 @@ import { PurchaseService } from './pages/purchase/purchase.service';
   providers: [
     appRoutingProviders,
     LoginService,
-    PurchaseService
+    PurchaseService,
+    AdminService
   ],
   bootstrap: [ AppComponent ]
 })

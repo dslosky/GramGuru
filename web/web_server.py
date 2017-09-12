@@ -13,7 +13,7 @@ if directory not in sys.path:
 
 # import database connection
 from orm import *
-from util import app_path, stripe
+from util import app_path, stripe, WEEK
 
 def web_path():
     path = os.path.dirname(os.path.abspath(__file__))
@@ -31,6 +31,7 @@ app = Flask(__name__,
 
 app.secret_key = 'super secret key'
 app.config['SESSION_TYPE'] = 'filesystem'
+app.json_encoder = AlchemyEncoder
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -129,6 +130,41 @@ def charge():
 
     Session.remove()
     return jsonify(success=True)
+
+@login_required
+@app.route('/admin/data')
+@dbconnect
+def get_admin_data(session=None):
+    now = time.time()
+    last_week = now - WEEK
+    admin_data = {}
+    admin_data['total_users'] = session.query(User).all()
+    admin_data['past_charges'] = session.query(Payment).filter(Payment.timestamp < now).all()
+    admin_data['weekly_charges'] = session.query(Payment).filter(Payment.timestamp > last_week) \
+                                           .filter(Payment.timestamp < now).all()
+    admin_data['future_charges'] = session.query(Payment).filter(Payment.timestamp > now).all()
+    admin_data['weekly_users'] = session.query(User).filter(User.timestamp > last_week).all()
+    
+    admin_data['current_jobs'] = session.query(Job).filter(Job.running == True).all()
+    admin_data['future_jobs'] = session.query(Job).filter(Job.run > now).all()
+    admin_data['recent_jobs'] = session.query(Job).filter(Job.end_time > time.time() - 3600).all()
+    
+    admin_data['errors'] = session.query(Job).filter(Job.error != '') \
+                                             .filter(Job.run > last_week).all()
+
+    admin_data['past_charges_sum'] = 0
+    admin_data['future_charges_sum'] = 0
+    admin_data['weekly_charges_sum'] = 0
+
+    for charge in admin_data['past_charges']:
+        admin_data['past_charges_sum'] += charge.amount
+    for charge in admin_data['future_charges']:
+        admin_data['future_charges_sum'] += charge.amount
+    for charge in admin_data['weekly_charges']:
+        admin_data['weekly_charges_sum'] += charge.amount
+
+    return json.dumps(admin_data, cls=AlchemyEncoder)
+
 
 #@app.errorhandler(404)
 #def page_not_found(error):

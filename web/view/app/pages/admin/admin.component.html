@@ -1,1 +1,25 @@
-<h1>Admin Comp</h1>
+<h1>Total Users: {{ adminService.data?.total_users?.length }}</h1>
+
+<h1>New Weekly Users: {{ adminService.data?.weekly_users?.length }}</h1>
+
+<h1>Weekly Charges: {{ adminService.data?.weekly_charges_sum }}</h1>
+
+<h1>Scheduled Charges: {{ adminService.data?.future_charges_sum }}</h1>
+
+<h1>Total Charges: {{ adminService.data?.past_charges_sum }}</h1>
+
+<h1>Running Jobs</h1>
+
+<div *ngFor="let job of adminService.data.current_jobs">
+    <p>Job: {{job.type}} for {{ job._user }}</p>
+</div>
+
+<h1>Scheduled Jobs</h1>
+<div *ngFor="let job of adminService.data.current_jobs">
+    <p>Job: {{job.type}} for {{ job._user }} runs in {{(job.run - Date.now/1000) / 60}} Minutes</p>
+</div>
+
+<h1>Recent Jobs</h1>
+<div *ngFor="let job of adminService.data.current_jobs">
+    <p>Job: {{job.type}} for {{ job._user }} ran {{(Date.now/1000 - job.end_time) / 60}} Minutes ago</p>
+</div>
