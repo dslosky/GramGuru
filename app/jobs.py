@@ -102,12 +102,13 @@ def unfollow(job, session=None):
         job.error = '{}: {}'.format(type(e), e)
     
     # remove deleted follows from the database
-    deleted_follows = (session.query(Following)
-                            .filter(Following._user == job._user)
-                            .filter(Following.other_user.in_(deleted))
-                            .all())
-    for follow in deleted_follows:
-        session.delete(follow)
+    if deleted:
+        deleted_follows = (session.query(Following)
+                                .filter(Following._user == job._user)
+                                .filter(Following.other_user.in_(deleted))
+                                .all())
+        for follow in deleted_follows:
+            session.delete(follow)
 
     session.commit()
 

@@ -79,6 +79,11 @@ def login():
     return jsonify(success=True, user=user)
 
 
+@app.route('/logged_in', methods=['POST'])
+def logged_in():
+    return jsonify(success=True, 
+                   loggedIn=bool(current_user.is_authenticated))
+
 @app.route('/register', methods=['POST'])
 def register():
     session = Session()

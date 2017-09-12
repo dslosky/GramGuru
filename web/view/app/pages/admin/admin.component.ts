@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Observable } from 'rxjs/Observable'
 import { AdminService } from './admin.service'
 @Component({
   selector: 'admin',
@@ -12,9 +13,9 @@ export class AdminComponent implements OnInit {
     constructor(public adminService: AdminService) {}
     
     ngOnInit() {
-        // this.subscriptions.push(this.adminService.data.subscribe((data: any) => {
-        //     this.adminData = data
-        // }));
+        this.subscriptions.push(Observable.timer(30000, 30000).data.subscribe((data: any) => {
+            this.adminData = data
+        }));
         this.adminService.getData()
     }
 }

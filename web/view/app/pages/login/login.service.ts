@@ -44,4 +44,18 @@ export class LoginService {
                     }
                 });
   }
+
+  checkLoggedIn() {
+    return this.http.get('/logged_in')
+                    .subscribe((res: any) => {
+                    res = res.json()
+                    if (res.loggedIn) {
+                        this.loggedIn = true;
+                        this.isAdmin = res.user.type == 'admin'
+                        this.user = res.user
+                    }
+                });
+  }
+  
 }
+

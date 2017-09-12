@@ -110,6 +110,9 @@ class IUser(Base):
                                                                     self.username, 
                                                                     bool(self.password))
 
+    def __str__(self):
+        return self.username
+
 class Job(Base):
     __tablename__ = 'jobs'
     id = Column(Integer, primary_key=True)
@@ -280,9 +283,12 @@ class AlchemyEncoder(json.JSONEncoder):
                     fields[field] = data
                 except TypeError:
                     try:
-                        fields[field] = [str(d) for d in data]
+                        if isinstance(data, list):
+                            fields[field] = [str(d) for d in data]
+                        else:
+                            fields[field] = str(data)
                     except:
-                        fields[field] = None
+                        fields[field] = str(data)
                 except UnicodeEncodeError:
                     fields[field] = 'Non-encodable'
             # a json-encodable dict
