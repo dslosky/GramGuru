@@ -8,6 +8,7 @@ import { AdminService } from './admin.service'
 export class AdminComponent implements OnInit {
     public adminData: any = null;
     public subscriptions: any[] = []
+    public date: any = Date
     constructor(public adminService: AdminService) {}
     
     ngOnInit() {
