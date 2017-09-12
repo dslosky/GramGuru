@@ -16,12 +16,12 @@
 
 <h1>Scheduled Jobs</h1>
 <div *ngFor="let job of adminService.data.future_jobs">
-    <p>Job: {{job.type}} for {{ job._user }} runs in {{(job.run - Date.now/1000) / 60}} Minutes</p>
+    <p>Job: {{job.type}} for {{ job._user }} runs in {{(job.run - Date().now/1000) / 60}} Minutes</p>
 </div>
 
 <h1>Recent Jobs</h1>
 <div *ngFor="let job of adminService.data.recent_jobs">
-    <p>Job: {{job.type}} for {{ job._user }} ran {{(Date.now/1000 - job.end_time) / 60}} Minutes ago with count {{ job.count }}</p>
+    <p>Job: {{job.type}} for {{ job._user }} ran {{(Date().now/1000 - job.end_time) / 60}} Minutes ago with count {{ job.count }}</p>
 </div>
 
 <h1>Errors</h1>
