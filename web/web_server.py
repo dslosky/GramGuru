@@ -1,6 +1,7 @@
 from flask import Flask, render_template, url_for, request, session, flash, redirect, send_file, send_from_directory, Response, jsonify
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
 import os, sys
+import copy
 
 # add the app to the path
 path = os.path.dirname(os.path.abspath(__file__))
@@ -81,8 +82,11 @@ def login():
 
 @app.route('/logged_in', methods=['POST'])
 def logged_in():
+    user = current_user.__dict__.copy.copy()
+    user = json.loads(json.dumps(user, cls=AlchemyEncoder))
     return jsonify(success=True, 
-                   loggedIn=bool(current_user.is_authenticated))
+                   loggedIn=bool(current_user.is_authenticated),
+                   user=user)
 
 @app.route('/register', methods=['POST'])
 def register():
