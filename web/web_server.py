@@ -80,10 +80,13 @@ def login():
     return jsonify(success=True, user=user)
 
 
-@app.route('/logged_in', methods=['POST'])
+@app.route('/logged_in')
 def logged_in():
-    user = current_user.__dict__.copy.copy()
-    user = json.loads(json.dumps(user, cls=AlchemyEncoder))
+    if current_user.is_authenticated:
+        user = current_user.__dict__.copy()
+        user.pop('_sa_instance_state', None)
+    else:
+        user = None
     return jsonify(success=True, 
                    loggedIn=bool(current_user.is_authenticated),
                    user=user)
@@ -151,7 +154,7 @@ def get_admin_data(session=None):
     admin_data['past_charges'] = session.query(Payment).filter(Payment.timestamp < now).all()
     admin_data['weekly_charges'] = session.query(Payment).filter(Payment.timestamp > last_week) \
                                            .filter(Payment.timestamp < now).all()
-    admin_data['future_charges'] = session.query(Payment).filter(Payment.timestamp > now).all()
+    admin_data['future_charges'] = session.query(Job).filter(Job.type == 'charge').all()
     admin_data['weekly_users'] = session.query(User).filter(User.timestamp > last_week).all()
     
     admin_data['current_jobs'] = session.query(Job).filter(Job.running == True).all()
@@ -168,7 +171,8 @@ def get_admin_data(session=None):
     for charge in admin_data['past_charges']:
         admin_data['past_charges_sum'] += charge.amount
     for charge in admin_data['future_charges']:
-        admin_data['future_charges_sum'] += charge.amount
+        if charge.i_user.user.subscription:
+            admin_data['future_charges_sum'] += charge.i_user.user.subscription.cost
     for charge in admin_data['weekly_charges']:
         admin_data['weekly_charges_sum'] += charge.amount
 
