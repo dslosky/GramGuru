@@ -25,9 +25,11 @@ class User(Base):
     username = Column(String(50), primary_key=True)
     password = Column(String(255))
     stripe_id = Column(String(255))
-    subscription = Column(String(255))
+    sub_name = Column(String(255), ForeignKey('subscriptions.name'))
     timestamp = Column(Integer)
     type = Column(String(10), default='user')
+
+    subscription = relationship("Subscription", backref=backref('users'))
 
     def set_password(self, password):
         self.password = generate_password_hash(password, method='pbkdf2:sha512')
@@ -171,12 +173,12 @@ class Subscription(Base):
     __tablename__ = 'subscriptions'
     name = Column(String(20), primary_key=True)
     monthly = Column(Boolean)
-    amount = Column(Integer)
+    cost = Column(Integer)
 
     def __repr__(self):
         return 'Subscription(name={}, monthly={}, amount={}'.format(self.name, 
                                                             self.monthly,
-                                                            self.amount)
+                                                            self.cost)
 
 def create_i_user(username, password, tags=None):
     i = IUser()
