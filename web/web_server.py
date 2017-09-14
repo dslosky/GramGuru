@@ -138,8 +138,8 @@ def charge(session=None):
 
     return jsonify(success=True)
 
-@login_required
 @app.route('/admin/data')
+@login_required
 @dbconnect
 def get_admin_data(session=None):
     now = time.time()
@@ -174,10 +174,10 @@ def get_admin_data(session=None):
     return json.dumps(admin_data, cls=AlchemyEncoder)
 
 
+@app.route('/admin/run-job', methods=['POST'])
 @login_required
-@app.route('/admin/run-job')
 @dbconnect
-def get_admin_data(session=None):
+def run_job(session=None):
     job_id = request.json.get('jobID', '')
     job = session.query(Job).filter(Job.id == int(job_id)).first()
     job.run = time.time()

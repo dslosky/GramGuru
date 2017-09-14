@@ -3,9 +3,9 @@ from sqlalchemy import  (MetaData, create_engine, Column,
                         ForeignKey, not_, and_)
 from sqlalchemy.orm import sessionmaker, Session, scoped_session, relationship, backref
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
-
 from werkzeug.security import generate_password_hash, check_password_hash
 from cryptography.fernet import Fernet
+from functools import wraps
 import base64
 import json
 import time
@@ -238,18 +238,16 @@ def add_column(engine, orm_obj, column, sqlite=False):
                                                                     column_name,
                                                                     column_type))
     
-
-
-
 def dbconnect(func):
+    @wraps(func)
     def inner(*args, **kwargs):
         session = Session()  # with all the requirements
         try:
-            return_val = None
             return_val = func(*args, session=session, **kwargs)
             session.commit()
         except:
             session.rollback()
+            return_val = None
             raise
         finally:
             refresh(return_val, session=session)

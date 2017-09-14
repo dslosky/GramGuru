@@ -18,7 +18,7 @@
 <div class="job-lst">
     <div *ngFor="let job of adminService.data.future_jobs">
         <h2>{{job.type}}</h2><p> for {{ job.i_user }} runs in {{Math.round((job.run - date.now()/1000) / 60)}} Minutes</p>
-        <h2 class="button" (click)="runJob(job.id)">Run Now</h2>
+        <h2 class="button" (click)="adminService.runJob(job.id)">Run Now</h2>
     </div>
 </div>
 
