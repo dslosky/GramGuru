@@ -27,6 +27,11 @@
     <p>Job: {{job.type}} for {{ job.i_user }} ran {{Math.round((date.now()/1000 - job.end_time) / 60)}} Minutes ago with count {{ job.count }}</p>
 </div>
 
+<h1>Stuck Jobs</h1>
+<div *ngFor="let job of adminService.data?.stuck_jobs">
+    <p>Job: {{job.type}} for {{ job.i_user }} should have run {{Math.round((date.now()/1000 - job.run) / 60)}} Minutes ago</p>
+</div>
+
 <h1>Errors</h1>
 <div *ngFor="let job of adminService.data.errors">
     <p>Job: {{job.type}} for {{ job.i_user }} failed {{Math.round((date.now()/1000 - job.end_time) / 60)}} Minutes ago: {{ job.error }} </p>

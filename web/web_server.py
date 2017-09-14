@@ -153,9 +153,15 @@ def get_admin_data(session=None):
     admin_data['weekly_users'] = session.query(User).filter(User.timestamp > last_week).all()
     
     admin_data['current_jobs'] = session.query(Job).filter(Job.running == True).all()
-    admin_data['future_jobs'] = session.query(Job).filter(Job.finished == False).all()
+    admin_data['future_jobs'] = session.query(Job).filter(Job.finished == False)\
+                                                    .filter(Job.running == False)\
+                                                    .filter(Job.run > now).all()
     admin_data['recent_jobs'] = session.query(Job).filter(Job.end_time > time.time() - 3600).all()
     
+    admin_data['stuck_jobs'] = session.query(Job).filter(Job.finished == False)\
+                                                    .filter(Job.running == False)\
+                                                    .filter(Job.run < now).all()
+
     admin_data['errors'] = session.query(Job).filter(Job.error != '') \
                                              .filter(Job.run > last_week).all()
 
