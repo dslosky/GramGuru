@@ -55,11 +55,11 @@ def index():
     return render_template('index.html')
 
 @app.route('/login', methods=['POST'])
+@dbconnect
 def login():
     if request.method == 'GET':
         return render_template('login.html')
 
-    session = Session()
     username = request.json.get('username', '')
     password = request.json.get('password', '')
     
@@ -68,12 +68,10 @@ def login():
     
     if (registered_user is None or not
             check_password_hash(registered_user.password, password)):
-        Session.remove()
         return jsonify(success=False)
 
     login_user(registered_user)
     flash('Logged in successfully')
-    Session.remove()
 
     user = current_user.__dict__.copy()
     user.pop('_sa_instance_state', None)
@@ -92,8 +90,8 @@ def logged_in():
                    user=user)
 
 @app.route('/register', methods=['POST'])
-def register():
-    session = Session()
+@dbconnect
+def register(session=None):
     username = request.json.get('username', '')
     password = request.json.get('password', '')
     tags = request.json.get('tags', '').split(',')
@@ -117,8 +115,8 @@ def register():
     return jsonify(success=True, user=user)
 
 @app.route('/charge', methods=['POST'])
-def charge():
-    session = Session()
+@dbconnect
+def charge(session=None):
     sub_type = request.json.get('type', '')
     token = request.json.get('token', '')
 
@@ -137,10 +135,7 @@ def charge():
 
     user.subscription = sub_type
     user.setup_payments()
-    session.commit()
 
-
-    Session.remove()
     return jsonify(success=True)
 
 @login_required
@@ -158,7 +153,7 @@ def get_admin_data(session=None):
     admin_data['weekly_users'] = session.query(User).filter(User.timestamp > last_week).all()
     
     admin_data['current_jobs'] = session.query(Job).filter(Job.running == True).all()
-    admin_data['future_jobs'] = session.query(Job).filter(Job.run > now).all()
+    admin_data['future_jobs'] = session.query(Job).filter(Job.finished == False).all()
     admin_data['recent_jobs'] = session.query(Job).filter(Job.end_time > time.time() - 3600).all()
     
     admin_data['errors'] = session.query(Job).filter(Job.error != '') \
@@ -178,6 +173,17 @@ def get_admin_data(session=None):
 
     return json.dumps(admin_data, cls=AlchemyEncoder)
 
+
+@login_required
+@app.route('/admin/run-job')
+@dbconnect
+def get_admin_data(session=None):
+    job_id = request.json.get('jobID', '')
+    job = session.query(Job).filter(Job.id == int(job_id)).first()
+    job.run = time.time()
+    session.commit()
+
+    return jsonify(success=True)
 
 #@app.errorhandler(404)
 #def page_not_found(error):
