@@ -15,7 +15,7 @@ export class AdminComponent implements OnInit, OnDestroy {
                 private changeDetector: ChangeDetectorRef) {}
     
     ngOnInit() {
-        this.subscriptions.push(Observable.timer(1, 30000).subscribe((data: any) => {
+        this.subscriptions.push(Observable.timer(1, 10000).subscribe((data: any) => {
             this.adminService.getData();
             this.changeDetector.detectChanges()
         }));

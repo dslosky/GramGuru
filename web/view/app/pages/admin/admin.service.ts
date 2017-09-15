@@ -26,7 +26,7 @@ export class AdminService {
                     ).subscribe((res: any) => {
                         res = res.json()
                         if (res.success) {
-                            console.log('SUCCESS')
+                            console.log('SUCCESS');
                         }
                     });
     }
