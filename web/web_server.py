@@ -56,7 +56,7 @@ def index():
 
 @app.route('/login', methods=['POST'])
 @dbconnect
-def login():
+def login(session=None):
     if request.method == 'GET':
         return render_template('login.html')
 
@@ -77,6 +77,10 @@ def login():
     user.pop('_sa_instance_state', None)
     return jsonify(success=True, user=user)
 
+@app.route('/logout')
+def logout():
+    logout_user()
+    return jsonify(success=True)
 
 @app.route('/logged_in')
 def logged_in():
@@ -138,8 +142,24 @@ def charge(session=None):
 
     return jsonify(success=True)
 
+##############################################
+################# ADMIN ONLY #################
+
+def admin_only(func):
+    @wraps(func)
+    def func_wrapper(*args, **kwargs):
+        if current_user and current_user.is_authenticated:
+            if current_user.type == 'admin':
+                return func(*args, **kwargs)
+            else:
+                return jsonify(success=False)
+        else:
+            return jsonify(success=False)
+    return func_wrapper
+
 @app.route('/admin/data')
 @login_required
+@admin_only
 @dbconnect
 def get_admin_data(session=None):
     now = time.time()
@@ -177,18 +197,29 @@ def get_admin_data(session=None):
     for charge in admin_data['weekly_charges']:
         admin_data['weekly_charges_sum'] += charge.amount
 
-    return json.dumps(admin_data, cls=AlchemyEncoder)
+    return jsonify(success=True, admin_data=admin_data)
 
 
 @app.route('/admin/run-job', methods=['POST'])
 @login_required
+@admin_only
 @dbconnect
 def run_job(session=None):
     job_id = request.json.get('jobID', '')
     job = session.query(Job).filter(Job.id == int(job_id)).first()
     job.run = time.time()
     session.commit()
+    return jsonify(success=True)
 
+@app.route('/admin/resolve-error', methods=['POST'])
+@login_required
+@admin_only
+@dbconnect
+def resolve_error(session=None):
+    job_id = request.json.get('jobID', '')
+    job = session.query(Job).filter(Job.id == int(job_id)).first()
+    job.error = None
+    session.commit()
     return jsonify(success=True)
 
 #@app.errorhandler(404)

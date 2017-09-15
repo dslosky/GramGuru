@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { Observable } from 'rxjs/Observable'
 import 'rxjs/add/observable/timer';
 import { AdminService } from './admin.service'
@@ -7,7 +7,7 @@ import { AdminService } from './admin.service'
   templateUrl: 'app/pages/admin/admin.component.html',
   styleUrls: ['app/pages/admin/admin.component.css']
 })
-export class AdminComponent implements OnInit {
+export class AdminComponent implements OnInit, OnDestroy {
     public subscriptions: any[] = []
     public date: any = Date
     public Math: any = Math;
@@ -19,5 +19,15 @@ export class AdminComponent implements OnInit {
             this.adminService.getData();
             this.changeDetector.detectChanges()
         }));
+    }
+
+    ngOnDestroy() {
+        this.endSubscriptions()
+    }
+
+    endSubscriptions() {
+        for (var sub in this.subscriptions) {
+            this.subscriptions[sub].unsubscribe()
+        }
     }
 }

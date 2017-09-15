@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Http, Headers } from '@angular/http';
+import { Router } from '@angular/router';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 @Injectable()
 export class LoginService {
@@ -7,7 +9,9 @@ export class LoginService {
     public isAdmin: boolean = false;
     public user: any = null;
 
-    constructor(private http: Http) {}
+    constructor(private http: Http,
+                private router: Router,
+                public notService: NotificationsService) {}
 
   login(username: string, password: string) {
     let headers = new Headers();
@@ -22,7 +26,9 @@ export class LoginService {
                         this.loggedIn = true;
                         this.isAdmin = res.user.type == 'admin'
                         this.user = res.user
-                        console.log('REDIRECT')
+                        
+                        this.router.navigate(['/user'])
+                        this.notService.success('Welcome Back ' + this.user['username'])
                     }
                 });
   }

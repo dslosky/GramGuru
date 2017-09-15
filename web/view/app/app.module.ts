@@ -14,6 +14,8 @@ import { LoginComponent } from './pages/login/login.component';
 import { UserComponent } from './pages/user/user.component';
 import { AdminComponent } from './pages/admin/admin.component';
 import { PurchaseComponent } from './pages/purchase/purchase.component';
+import { NotificationsComponent } from './notifications/notifications.component';
+import { NotificationsService } from './notifications/notifications.service';
 
 import { LoginService } from './pages/login/login.service';
 import { PurchaseService } from './pages/purchase/purchase.service';
@@ -36,13 +38,15 @@ import { AdminService } from './pages/admin/admin.service';
     LoginComponent,
     UserComponent,
     AdminComponent,
-    PurchaseComponent
+    PurchaseComponent,
+    NotificationsComponent
   ],
   providers: [
     appRoutingProviders,
     LoginService,
     PurchaseService,
-    AdminService
+    AdminService,
+    NotificationsService
   ],
   bootstrap: [ AppComponent ]
 })
