@@ -3,3 +3,5 @@
 *~
 .vscode
 *.db
+.DS_Store
+secret_stripe_key

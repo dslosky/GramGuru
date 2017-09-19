@@ -7,6 +7,17 @@ import datetime
 import random
 import copy
 import os, sys
+import stripe
+
+path = os.path.dirname(os.path.abspath(__file__))
+path = path.split(os.sep)
+path += ['secret_stripe_key']
+secret_key_file = os.path.normpath(os.sep.join(path))
+with open(secret_key_file, 'r') as key:
+    stripe.api_key = key.read()
+
+WEEK = 60 * 60 * 24 * 7
+MONTH = 60 * 60 * 24 * 31
 
 class Configs(dict):
     def __init__(self,*arg,**kw):
@@ -58,7 +69,7 @@ def log(msg, err=None):
     else:
         error_msg = ''
 
-    with open('crawler.log', 'a') as log:
+    with open(app_path() + os.sep + 'crawler.log', 'a') as log:
         log.write('{}: {}\n{}'.format(timestamp, msg, error_msg))
 
 def app_path():
