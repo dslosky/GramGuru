@@ -272,7 +272,8 @@ class AlchemyEncoder(json.JSONEncoder):
         if isinstance(obj.__class__, DeclarativeMeta):
             # an SQLAlchemy class
             fields = {}
-            for field in [x for x in dir(obj) if not x.startswith('_') and x != 'metadata']:
+            for field in [x for x in dir(obj) if not x.startswith('_') 
+                            and x != 'metadata' and x != 'password']:
                 data = obj.__getattribute__(field)
 
                 if isinstance(data, types.MethodType):

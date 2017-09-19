@@ -67,11 +67,6 @@ class Worker(object):
                     jobs.charge(job, session)
 
         except Exception as e:
-            # rollback here so we can store the error with the job
-            #session.rollback()
-            #job.error = '{}: {}'.format(type(e), e)
-            #session.commit()
-
             f_name = os.path.basename(sys.exc_info()[2].tb_frame.f_code.co_filename)
             line_num = sys.exc_info()[2].tb_lineno
             log(msg='Worker error: {} line {}'.format(f_name,

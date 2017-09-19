@@ -1,1 +1,14 @@
-<h1>User Comp</h1>
+<h1 class="welcome">Hello, {{ userService?.user?.username }}</h1>
+
+<h3>We've been spreading your Instagram account like hot fire</h3>
+
+<div *ngIf="userService.data">
+    <p>Likes: {{ userService.data[0]?.like_total }}</p>
+    <p>Follows: {{ userService.data[0]?.follow_total }}</p>
+    <p>Unfollows: {{ userService.data[0]?.unfollow_total }}</p>
+
+    <h3>Tags</h3>
+    <div *ngFor="let tag of userService.data[0].i_user.tags">
+        <p>{{ tag }}</p>
+    </div>
+</div>

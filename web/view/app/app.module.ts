@@ -19,6 +19,7 @@ import { NotificationsService } from './notifications/notifications.service';
 
 import { LoginService } from './pages/login/login.service';
 import { PurchaseService } from './pages/purchase/purchase.service';
+import { UserService } from './pages/user/user.service';
 import { AdminService } from './pages/admin/admin.service';
 
 @NgModule({
@@ -46,7 +47,8 @@ import { AdminService } from './pages/admin/admin.service';
     LoginService,
     PurchaseService,
     AdminService,
-    NotificationsService
+    NotificationsService,
+    UserService
   ],
   bootstrap: [ AppComponent ]
 })

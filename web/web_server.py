@@ -118,7 +118,59 @@ def register(session=None):
     user.pop('_sa_instance_state', None)
     return jsonify(success=True, user=user)
 
+@app.route('/user-data/<username>', methods=['GET'])
+@login_required
+@dbconnect
+def get_user_data(session=None, username=None):
+    user = (session.query(User)
+               .filter(User.username == username)
+               .first())
+
+    user_data = []
+    for iu in user.i_users:
+        data = {}
+        data['i_user'] = iu
+        data['follows'] = session.query(Job).filter(Job.type == 'follow')\
+                                             .filter(Job._user == username)\
+                                             .filter(Job.finished == True)\
+                                             .all()
+        data['likes'] = session.query(Job).filter(Job.type == 'like')\
+                                             .filter(Job._user == username)\
+                                             .filter(Job.finished == True)\
+                                             .all()
+        data['unfollows'] = session.query(Job).filter(Job.type == 'unfollow')\
+                                             .filter(Job._user == username)\
+                                             .filter(Job.finished == True)\
+                                             .all()
+        data['future_charges'] = session.query(Job).filter(Job.type == 'charge')\
+                                             .filter(Job._user == username)\
+                                             .filter(Job.run > time.time())\
+                                             .all()
+
+        data['payments'] = session.query(Payment).filter(Payment._user == username)\
+                                                  .all()
+
+        data['follow_total'] = 0
+        for job in data['follows']:
+            if job.count:
+                data['follow_total'] += job.count
+        
+        data['like_total'] = 0
+        for job in data['likes']:
+            if job.count:
+                data['like_total'] += job.count
+
+        data['unfollow_total'] = 0
+        for job in data['unfollows']:
+            if job.count:
+                data['unfollow_total'] += job.count
+
+        user_data += [data]
+
+    return jsonify(success=True, data=user_data, user=user)
+
 @app.route('/charge', methods=['POST'])
+@login_required
 @dbconnect
 def charge(session=None):
     sub_type = request.json.get('type', '')

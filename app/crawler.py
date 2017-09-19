@@ -116,7 +116,7 @@ class Insta(object):
 
         self.driver.switch_to_window(self.main_handle)
 
-        log('Followed {} in #{} for {}'.format(len(new_follows), tag, self.user))
+        #log('Followed {} in #{} for {}'.format(len(new_follows), tag, self.user))
         return new_follows, finished
 
     def is_following(self):
@@ -169,7 +169,7 @@ class Insta(object):
                 deleted += [follow]
         
         
-        log('Unfollowed {} people for {}'.format(delete_count, self.user))
+        #log('Unfollowed {} people for {}'.format(delete_count, self.user))
         return deleted
 
     def like_feed(self, scroll_count=2):
@@ -182,7 +182,7 @@ class Insta(object):
             actionChains.double_click(pic).perform()
             time.sleep(2)
 
-        log('Liked {} in feed for {}'.format(len(pics), self.user))
+        #log('Liked {} in feed for {}'.format(len(pics), self.user))
         return len(pics)
 
     def like_tag(self, tag, scroll_count=5):
@@ -206,7 +206,7 @@ class Insta(object):
 
         self.driver.switch_to_window(self.main_handle)
 
-        log('Liked {} in #{} for {}'.format(count, tag, self.user))
+        #log('Liked {} in #{} for {}'.format(count, tag, self.user))
         return count
 
 
