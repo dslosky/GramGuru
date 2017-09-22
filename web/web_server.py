@@ -286,9 +286,9 @@ def resolve_error(session=None):
     session.commit()
     return jsonify(success=True)
 
-#@app.errorhandler(404)
-#def page_not_found(error):
-#    return render_template('index.html')
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('index.html')
 
 def start(port=80):
     app.run(host='0.0.0.0', port=port, threaded=True)
