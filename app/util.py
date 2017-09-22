@@ -16,6 +16,7 @@ secret_key_file = os.path.normpath(os.sep.join(path))
 with open(secret_key_file, 'r') as key:
     stripe.api_key = key.read()
 
+DAY = 60 * 60 * 24
 WEEK = 60 * 60 * 24 * 7
 MONTH = 60 * 60 * 24 * 31
 

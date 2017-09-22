@@ -2,7 +2,7 @@ import time
 
 from orm import *
 from crawler import Insta
-from util import shuffle, rando_hour, log, WEEK, MONTH
+from util import shuffle, rando_hour, log, DAY, WEEK, MONTH
 
 
 def like(job, session=None):
@@ -25,13 +25,10 @@ def like(job, session=None):
         job.error = '{}: {}'.format(type(e), e)
 
     job.count = count
-    job.end_time = time.time()
-    job.running = False
-    job.finished = True
+    job.finish()
     
     # new run for jobs
-    new_job = Job(type='like', run=time.time() + rando_hour())
-    new_job.i_user = job.i_user
+    new_job = schedule_next_job(job, rando_hour())
     session.add(new_job)
     session.commit()
 
@@ -72,13 +69,10 @@ def follow(job, session=None):
 
     session.commit()
     job.count = count
-    job.end_time = time.time()
-    job.running = False
-    job.finished = True
+    job.finish()
 
     # new run for jobs
-    new_job = Job(type='follow', run=time.time() + (1.5 * rando_hour()))
-    new_job.i_user = job.i_user
+    new_job = schedule_next_job(job, 1.5 * rando_hour())
     session.add(new_job)
     session.commit()
 
@@ -113,17 +107,28 @@ def unfollow(job, session=None):
     session.commit()
 
     job.count = len(deleted)
-    job.end_time = time.time()
-    job.running = False
-    job.finished = True
+    job.finish()
 
     # new run for job
-    new_job = Job(type='unfollow', run=time.time() + rando_hour())
-    new_job.i_user = job.i_user
+    new_job = schedule_next_job(job, rando_hour())
     session.add(new_job)
     session.commit()
 
     insta.driver.quit()
+    return job
+
+def count_followers(job, session=None):
+    insta = Insta()
+    count = insta.count_followers(job.i_user.username)
+    insta.driver.quit()
+    
+    job.count = count
+    job.finish()
+
+    new_job = schedule_next_job(job, DAY)
+    session.add(new_job)
+
+    session.commit()
     return job
 
 def charge(job, session=None):
@@ -155,10 +160,8 @@ def charge(job, session=None):
     except Exception as e:
         job.error = '{}: {}'.format(type(e), e)
 
-    job.end_time = time.time()
-    job.running = False
-    job.finished = True
-
+    
+    job.finish()
     session.commit()
 
     if next_charge > 0:
@@ -168,3 +171,8 @@ def charge(job, session=None):
         session.commit()
 
     return job
+
+def schedule_next_job(job, when):
+    new_job = Job(type=job.type, run=time.time() + when)
+    new_job.i_user = job.i_user
+    return new_job

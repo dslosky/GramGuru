@@ -209,6 +209,19 @@ class Insta(object):
         #log('Liked {} in #{} for {}'.format(count, tag, self.user))
         return count
 
+    def count_followers(self, username):
+        self.driver.get('https://www.instagram.com/' + username + '/')
+        el = self.driver.find_element_by_xpath("//*[contains(text(), 'followers')]")
+        el_str = el.text
+        
+        # just full the follower count out of there
+        nums = '0123456789'
+        f_count_str = ''
+        for l in el_str:
+            if l in nums:
+                f_count_str += l
+
+        return int(f_count_str)
 
     def login(self, username='', password=''):
         if not username:

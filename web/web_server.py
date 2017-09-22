@@ -106,7 +106,7 @@ def register(session=None):
 
     if registered_user is not None:
         return jsonify(success=False, 
-                       msg='This Instagram user is already registered with us')
+                       msg='This Instagram user is already registered')
 
     if check_login(username, password) is False:
         return jsonify(success=False, 

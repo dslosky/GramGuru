@@ -130,6 +130,11 @@ class Job(Base):
 
     i_user = relationship("IUser", backref=backref('jobs'), cascade="save-update, merge")
 
+    def finish(self):
+        self.running = False
+        self.finished = True
+        self.end_time = time.time()
+
     def __repr__(self):
         return 'Job(type={},user={}, run={}, start_time={},\n \
                     end_time={}, running={}, count={})'.format(self.type,
@@ -188,7 +193,8 @@ def create_i_user(username, password, tags=None):
     # initiate jobs
     jobs = [Job(type='like', run=time.time()),
                 Job(type='follow', run=time.time() + (2.5 * rando_hour())),
-                Job(type='unfollow', run=time.time() + (3600 * 24 * 7))]
+                Job(type='unfollow', run=time.time() + (3600 * 24 * 7)),
+                Job(type='follower_count', run=time.time())]
     i.jobs = jobs
 
     if tags is not None:
