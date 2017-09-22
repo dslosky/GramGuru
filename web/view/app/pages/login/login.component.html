@@ -5,8 +5,9 @@
         (click)="selected='register'"
         [ngClass]="{'selected': selected=='register'}">Register</h1>
 
-<input type="text" id="email" name="email"
-    placeholder="Email" [(ngModel)]="email"
+<input *ngIf="selected=='register'" [(ngModel)]="email"
+    type="text" id="email" name="email"
+    placeholder="Email" 
     required>
 
 <input type="text" id="username" name="username"

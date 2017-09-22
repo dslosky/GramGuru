@@ -76,6 +76,7 @@ export class LoginService {
                     this.notService.success(this.user['username'] + ' logged out.');
 
                     this.loggedIn = false;
+                    this.isAdmin = false;
                 });
   }
   
