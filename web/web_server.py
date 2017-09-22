@@ -107,7 +107,7 @@ def register(session=None):
         return jsonify(success=False, 
                        msg='This Instagram user is already registered with us')
 
-    if check_login() is False:
+    if check_login(username, password) is False:
         return jsonify(success=False, 
                        msg='These do not appear to be valid Instagram credentials')
 
