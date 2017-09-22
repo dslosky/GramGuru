@@ -69,7 +69,8 @@ def login(session=None):
     
     if (registered_user is None or not
             check_password_hash(registered_user.password, password)):
-        return jsonify(success=False)
+        return jsonify(success=False, 
+                       msg='This Instagram user is not registered with us')
 
     login_user(registered_user)
     flash('Logged in successfully')
