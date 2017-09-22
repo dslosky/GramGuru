@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { LoginService } from '../pages/login/login.service';
 
 @Component({
   selector: 'nav',
@@ -6,5 +7,6 @@ import { Component } from '@angular/core';
   styleUrls: ['app/nav/nav.component.css']
 })
 export class NavComponent {
+    constructor(public loginService: LoginService) {}
     
 }

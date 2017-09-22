@@ -70,7 +70,7 @@ def login(session=None):
     if (registered_user is None or not
             check_password_hash(registered_user.password, password)):
         return jsonify(success=False, 
-                       msg='This Instagram user is not registered with us')
+                       msg='Your username or password is incorrect')
 
     login_user(registered_user)
     flash('Logged in successfully')
@@ -82,6 +82,7 @@ def login(session=None):
 @app.route('/logout')
 def logout():
     logout_user()
+    
     return jsonify(success=True)
 
 @app.route('/logged_in')
