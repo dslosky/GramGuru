@@ -15,6 +15,7 @@ if directory not in sys.path:
 # import database connection
 from orm import *
 from util import app_path, stripe, WEEK
+from crawler import Insta
 
 def web_path():
     path = os.path.dirname(os.path.abspath(__file__))
@@ -98,16 +99,19 @@ def logged_in():
 def register(session=None):
     username = request.json.get('username', '')
     password = request.json.get('password', '')
-    tags = request.json.get('tags', '').split(',')
 
     registered_user = (session.query(User)
                             .filter(User.username == username).first())
 
     if registered_user is not None:
-        Session.remove()
-        return jsonify(success=False)
+        return jsonify(success=False, 
+                       msg='This Instagram user is already registered with us')
 
-    user = create_user(username, password, tags=tags)
+    if check_login() is False:
+        return jsonify(success=False, 
+                       msg='These do not appear to be valid Instagram credentials')
+
+    user = create_user(username, password)
 
     session.add(user)
     session.commit()
@@ -193,6 +197,13 @@ def charge(session=None):
     user.setup_payments()
 
     return jsonify(success=True)
+
+def check_login(username, password):
+    i = Insta()
+    login_check = i.login(username, password)
+    i.driver.quit()
+
+    return login_check
 
 ##############################################
 ################# ADMIN ONLY #################

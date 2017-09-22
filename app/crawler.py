@@ -222,6 +222,15 @@ class Insta(object):
         self.driver.find_element_by_name('username').send_keys(username)
         self.driver.find_element_by_name('password').send_keys(password)
         self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]").click()
+        time.sleep(3)
+        # check if the login worked
+        try:
+            login_el = self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]")
+            # If that element is found, we're still on the login page... bad credentials
+            return False
+        except Exception as e:
+            # no more login element, login successful!
+            return True
 
 if __name__ == '__main__':
     session = Session()

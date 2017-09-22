@@ -29,6 +29,8 @@ export class LoginService {
                         
                         this.router.navigate(['/user'])
                         this.notService.success('Welcome Back ' + this.user['username'])
+                    } else {
+                        this.notService.warning(res.msg)
                     }
                 });
   }
@@ -46,7 +48,11 @@ export class LoginService {
                         this.loggedIn = true;
                         this.isAdmin = res.user.type == 'admin'
                         this.user = res.user
-                        console.log('REGISTERED')
+
+                        this.router.navigate(['/user'])
+                        this.notService.success('Welcome ' + this.user['username'] + '!')
+                    } else {
+                        this.notService.warning(res.msg)
                     }
                 });
   }

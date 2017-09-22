@@ -205,8 +205,8 @@ def create_user(username, password, tags=None):
     u.timestamp = time.time()
     u.set_password(password)
 
-    i = create_i_user(username,password,tags=tags)
-    u.i_users.append(i)
+    #i = create_i_user(username,password,tags=tags)
+    #u.i_users.append(i)
 
     return u
 
