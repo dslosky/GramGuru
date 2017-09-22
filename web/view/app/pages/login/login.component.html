@@ -2,8 +2,13 @@
         (click)="selected='login'"
         [ngClass]="{'selected': selected=='login'}">Login</h1>
 <h1 class="button button-choose" 
-        (click)="selected='signup'"
-        [ngClass]="{'selected': selected=='signup'}">Sign Up</h1>
+        (click)="selected='register'"
+        [ngClass]="{'selected': selected=='register'}">Register</h1>
+
+<input *ngIf="selected=='register'" [(ngModel)]="email"
+    type="text" id="email" name="email"
+    placeholder="Email" 
+    required>
 
 <input type="text" id="username" name="username"
     placeholder="Username" [(ngModel)]="username"
@@ -13,10 +18,5 @@
     placeholder="Password" [(ngModel)]="password"
     required>
 
-<input *ngIf="selected=='signup'" 
-    type="text" id="tags" name="tags" 
-    placeholder="tag1,tag2,tag3 (without #s)" [(ngModel)]="tags"
-    required>
-
 <h2 *ngIf="selected=='login'" class="button" (click)="login()">Go</h2>
-<h2 *ngIf="selected=='signup'" class="button" (click)="register()">Go</h2>
+<h2 *ngIf="selected=='register'" class="button" (click)="register()">Go</h2>

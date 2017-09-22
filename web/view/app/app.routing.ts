@@ -17,7 +17,7 @@ const appRoutes: Routes = [
             pathMatch: 'full'
         },
         {
-            path: 'landing',
+            path: '',
             component: LandingComponent
         },
         {
@@ -25,7 +25,7 @@ const appRoutes: Routes = [
             component: LoginComponent
         },
         {
-            path: 'user',
+            path: 'theguru',
             component: UserComponent,
             canActivate: [LoginGuard]
         },

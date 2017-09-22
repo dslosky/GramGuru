@@ -24,18 +24,20 @@ export class LoginService {
                     res = res.json()
                     if (res.success) {
                         this.loggedIn = true;
-                        this.isAdmin = res.user.type == 'admin'
-                        this.user = res.user
+                        this.isAdmin = res.user.type == 'admin';
+                        this.user = res.user;
                         
-                        this.router.navigate(['/user'])
-                        this.notService.success('Welcome Back ' + this.user['username'])
+                        this.router.navigate(['/theguru']);
+                        this.notService.success('Welcome Back ' + this.user['username']);
+                    } else {
+                        this.notService.warning(res.msg);
                     }
                 });
   }
 
-  register(username: string, password: string, tags: string) {
+  register(username: string, password: string, email: string) {
     let headers = new Headers();
-    let data: any = {username: username, password: password, tags: tags}
+    let data: any = {username: username, password: password, email: email}
     headers.append('Content-Type', 'application/json');
     return this.http.post('/register', 
                           JSON.stringify(data), 
@@ -44,9 +46,13 @@ export class LoginService {
                     res = res.json()
                     if (res.success) {
                         this.loggedIn = true;
-                        this.isAdmin = res.user.type == 'admin'
-                        this.user = res.user
-                        console.log('REGISTERED')
+                        this.isAdmin = res.user.type == 'admin';
+                        this.user = res.user;
+
+                        this.router.navigate(['/theguru']);
+                        this.notService.success('Welcome ' + this.user['username'] + '!');
+                    } else {
+                        this.notService.warning(res.msg);
                     }
                 });
   }
@@ -57,9 +63,20 @@ export class LoginService {
                     res = res.json()
                     if (res.loggedIn) {
                         this.loggedIn = true;
-                        this.isAdmin = res.user.type == 'admin'
-                        this.user = res.user
+                        this.isAdmin = res.user.type == 'admin';
+                        this.user = res.user;
                     }
+                });
+  }
+
+  logout() {
+    return this.http.get('/logout')
+                    .subscribe((res: any) => {
+                    this.router.navigate(['']);
+                    this.notService.success(this.user['username'] + ' logged out.');
+
+                    this.loggedIn = false;
+                    this.isAdmin = false;
                 });
   }
   

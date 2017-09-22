@@ -15,6 +15,7 @@ if directory not in sys.path:
 # import database connection
 from orm import *
 from util import app_path, stripe, WEEK
+from crawler import Insta
 
 def web_path():
     path = os.path.dirname(os.path.abspath(__file__))
@@ -68,7 +69,8 @@ def login(session=None):
     
     if (registered_user is None or not
             check_password_hash(registered_user.password, password)):
-        return jsonify(success=False)
+        return jsonify(success=False, 
+                       msg='Your username or password is incorrect')
 
     login_user(registered_user)
     flash('Logged in successfully')
@@ -80,6 +82,7 @@ def login(session=None):
 @app.route('/logout')
 def logout():
     logout_user()
+    
     return jsonify(success=True)
 
 @app.route('/logged_in')
@@ -98,16 +101,19 @@ def logged_in():
 def register(session=None):
     username = request.json.get('username', '')
     password = request.json.get('password', '')
-    tags = request.json.get('tags', '').split(',')
 
     registered_user = (session.query(User)
                             .filter(User.username == username).first())
 
     if registered_user is not None:
-        Session.remove()
-        return jsonify(success=False)
+        return jsonify(success=False, 
+                       msg='This Instagram user is already registered')
 
-    user = create_user(username, password, tags=tags)
+    if check_login(username, password) is False:
+        return jsonify(success=False, 
+                       msg='These do not appear to be valid Instagram credentials')
+
+    user = create_user(username, password)
 
     session.add(user)
     session.commit()
@@ -194,6 +200,13 @@ def charge(session=None):
 
     return jsonify(success=True)
 
+def check_login(username, password):
+    i = Insta()
+    login_check = i.login(username, password)
+    i.driver.quit()
+
+    return login_check
+
 ##############################################
 ################# ADMIN ONLY #################
 
@@ -274,9 +287,9 @@ def resolve_error(session=None):
     session.commit()
     return jsonify(success=True)
 
-#@app.errorhandler(404)
-#def page_not_found(error):
-#    return render_template('index.html')
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('index.html')
 
 def start(port=80):
     app.run(host='0.0.0.0', port=port, threaded=True)
