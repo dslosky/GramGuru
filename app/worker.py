@@ -1,11 +1,11 @@
 import time
 import json
+import os, sys
 
 from orm import *
 import jobs
 from crawler import Insta
 from util import shuffle, log
-
 
 class Worker(object):
     def __init__(self):
