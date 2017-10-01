@@ -17,7 +17,7 @@ CONFIGS = Configs()
 metadata = MetaData()
 Base = declarative_base(metadata=metadata)
 
-engine = create_engine(CONFIGS['database'])
+engine = create_engine(CONFIGS['database'], pool_recycle=3600)
 
 class User(Base):
     __tablename__ = 'users'
@@ -173,6 +173,22 @@ class Tag(Base):
 
     def __str__(self):
         return self.tag
+
+class Discount(Base):
+    __tablename__ = 'discounts'
+    id = Column(Integer, primary_key=True)
+    _user = Column(String(50), ForeignKey('i_users.username'))
+    ammount = Column(Integer)
+    timestamp = Column(Integer)
+    redeemed = Column(Integer)
+
+    i_user = relationship("IUser", backref=backref('discounts', order_by=timestamp))
+
+    def __repr__(self):
+        return 'Discount(user={}, ammount={}, timestamp={}, redeemed={})'.format(self._user, 
+                                                                                self.ammount,
+                                                                                self.timestamp,
+                                                                                self.redeemed)
 
 class Subscription(Base):
     __tablename__ = 'subscriptions'
