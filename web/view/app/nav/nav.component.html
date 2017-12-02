@@ -1,0 +1,12 @@
+<!-- <a routerLink="/login">Login</a>
+<a routerLink="/user">User</a>
+<a routerLink="/purchase">Purchase</a>
+<a routerLink="/"></a>
+-->
+<a routerLink="/theguru">The Guru</a>
+
+<a *ngIf="loginService.isAdmin"
+    routerLink="/admin">Admin</a>
+
+<a *ngIf="loginService.loggedIn"
+    (click)="loginService.logout()">Logout</a>

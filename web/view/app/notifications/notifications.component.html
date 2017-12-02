@@ -1,0 +1,5 @@
+<div class="container" [@fadeIn]="showNot">
+    <p class="close" (click)="close()">Close</p>
+    <h1 class="title">{{ notification?.title }}</h1>
+    <p class="message">{{ notification?.message }}</p>
+</div>
