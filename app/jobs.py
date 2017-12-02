@@ -135,26 +135,26 @@ def charge(job, session=None):
     p = Payment()
     try:
         user = job.i_user.user
+        sub = job.i_user.subscription
         p.user = user
         p.timestamp = time.time()
         session.add(p)
 
-        next_charge = 0
-        if user.subscription == '1month':
-            user.charge(4000)
-            p.amount = 4000
-            p.paid_through = time.time() + MONTH
+        discount = [d for d in user.discounts if d.redeemed is False]
+        cost = sub.cost
 
-        if user.subscription == '3month':
-            user.charge(9000)
-            p.amount = 9000
-            p.paid_through = time.time() + (3 * MONTH)
+        if discount:
+            for d in discount:
+                cost -= d.amount
+                d.redeemed = True
+        session.commit()
 
-        elif user.subscription == 'continuous':
-            user.charge(2500)
-            p.amount = 2500
-            p.paid_through = time.time() + MONTH
-            next_charge = time.time() + MONTH
+        user.charge(cost)
+        p.amount = (cost)
+        p.paid_through = sub.months * MONTH
+
+        if sub.type == 'continuous':
+            next_charge = p.paid_through
 
         log('Charged {} ${}'.format(user.username, p.amount))
     except Exception as e:
