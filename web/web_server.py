@@ -102,6 +102,8 @@ def register(session=None):
     username = request.json.get('username', '')
     password = request.json.get('password', '')
 
+    referal = request.json.get('referal', False)
+
     registered_user = (session.query(User)
                             .filter(User.username == username).first())
 
@@ -119,6 +121,9 @@ def register(session=None):
     session.commit()
 
     login_user(user)
+
+    if referal is not False:
+        make_referal_discount(referal)
 
     user = current_user.__dict__.copy()
     user.pop('_sa_instance_state', None)
@@ -293,6 +298,17 @@ def page_not_found(error):
 
 def start(port=80):
     app.run(host='0.0.0.0', port=port, threaded=True)
+
+@dbconnect
+def make_referal_discount(username):
+    user = session.query(User).filter(User.username).first()
+    if user is not None:
+        d = Discount(amount=500, timestamp=time.time())
+        d.user = user
+
+        session.add(d)
+        session.commit()
+
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

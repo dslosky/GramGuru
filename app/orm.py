@@ -95,8 +95,10 @@ class IUser(Base):
     username = Column(String(50), primary_key=True)
     password = Column(String(255))
     _user = Column(String(50), ForeignKey('users.username'))
+    _subscription = Column(String(20), ForeignKey('subscriptions.name'))
 
     user = relationship("User", backref=backref('i_users'))
+    subscription = relationship("Subscription", backref=backref('i_users'))
 
     def set_password(self, password):
         # encrypt the password and save it
@@ -177,23 +179,24 @@ class Tag(Base):
 class Discount(Base):
     __tablename__ = 'discounts'
     id = Column(Integer, primary_key=True)
-    _user = Column(String(50), ForeignKey('i_users.username'))
-    ammount = Column(Integer)
+    _user = Column(String(50), ForeignKey('users.username'))
+    amount = Column(Integer)
     timestamp = Column(Integer)
-    redeemed = Column(Integer)
+    redeemed = Column(Boolean, default=False)
 
-    i_user = relationship("IUser", backref=backref('discounts', order_by=timestamp))
+    user = relationship("User", backref=backref('discounts'))
 
     def __repr__(self):
-        return 'Discount(user={}, ammount={}, timestamp={}, redeemed={})'.format(self._user, 
-                                                                                self.ammount,
+        return 'Discount(user={}, amount={}, timestamp={}, redeemed={})'.format(self._user, 
+                                                                                self.amount,
                                                                                 self.timestamp,
                                                                                 self.redeemed)
 
 class Subscription(Base):
     __tablename__ = 'subscriptions'
     name = Column(String(20), primary_key=True)
-    monthly = Column(Boolean)
+    type = Column(String(50))
+    months = Column(Integer)
     cost = Column(Integer)
 
     def __repr__(self):
