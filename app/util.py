@@ -81,7 +81,11 @@ def app_path():
     return directory
 
 def save_cache(user, cache):
-    with open('{}.pkl'.format(user), 'wb') as f_:
+    f_name = os.path.normpath(os.path.join(app_path(),
+                                            'cache',
+                                            '{}.pkl'.format(user)))
+
+    with open(f_name, 'wb') as f_:
         f_.write(pickle.dumps(cache))
 
 def get_cache(user):
