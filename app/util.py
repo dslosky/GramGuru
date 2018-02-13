@@ -94,7 +94,7 @@ def get_cache(user):
                                             '{}.pkl'.format(user)))
 
     if os.path.exists(f_name):
-        with open('{}.pkl'.format(user), 'rb') as f_:
+        with open(f_name, 'rb') as f_:
             return pickle.loads(f_.read())
     else:
         return None
