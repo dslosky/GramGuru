@@ -8,6 +8,7 @@ import random
 import copy
 import os, sys
 import stripe
+import pickle
 
 path = os.path.dirname(os.path.abspath(__file__))
 path = path.split(os.sep)
@@ -78,3 +79,18 @@ def app_path():
     path = path.split(os.sep)
     directory = os.path.normpath(os.sep.join(path))
     return directory
+
+def save_cache(user, cache):
+    with open('{}.pkl'.format(user), 'wb') as f_:
+        f_.write(pickle.dumps(cache))
+
+def get_cache(user):
+    f_name = os.path.normpath(os.path.join(app_path(),
+                                            'cache',
+                                            '{}.pkl'.format(user)))
+
+    if os.path.exists(f_name):
+        with open('{}.pkl'.format(user), 'rb') as f_:
+            return pickle.loads(f_.read())
+    else:
+        return None
