@@ -5,10 +5,10 @@ from crawler import Insta
 from util import shuffle, rando_hour, log, DAY, WEEK, MONTH
 
 
-def like(job, session=None):
+def like(job, session=None, cache=None):
     count = 0
     try:
-        insta = Insta()
+        insta = Insta(cache)
         insta.login(username=job.i_user.username,
                     password=job.i_user.get_password())
         time.sleep(1)
@@ -32,14 +32,14 @@ def like(job, session=None):
     session.add(new_job)
     session.commit()
 
-    insta.driver.quit()
+    insta.quit()
     return job
 
-def follow(job, session=None):
+def follow(job, session=None, cache=None):
     new_follows = []
     count = 0
     try:
-        insta = Insta()
+        insta = Insta(cache)
         insta.login(username=job.i_user.username,
                     password=job.i_user.get_password())
         time.sleep(1)
@@ -76,13 +76,13 @@ def follow(job, session=None):
     session.add(new_job)
     session.commit()
 
-    insta.driver.quit()
+    insta.quit()
     return job
 
-def unfollow(job, session=None):
+def unfollow(job, session=None, cache=None):
     deleted = []
     try:
-        insta = Insta()
+        insta = Insta(cache)
         insta.login(username=job.i_user.username,
                     password=job.i_user.get_password())
         time.sleep(1)
@@ -114,13 +114,13 @@ def unfollow(job, session=None):
     session.add(new_job)
     session.commit()
 
-    insta.driver.quit()
+    insta.quit()
     return job
 
-def count_followers(job, session=None):
-    insta = Insta()
+def count_followers(job, session=None, cache=None):
+    insta = Insta(cache)
     count = insta.count_followers(job.i_user.username)
-    insta.driver.quit()
+    insta.quit()
     
     job.count = count
     job.finish()

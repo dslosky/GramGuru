@@ -5,7 +5,7 @@ import os, sys
 from orm import *
 import jobs
 from crawler import Insta
-from util import shuffle, log
+from util import shuffle, log, get_cache
 
 class Worker(object):
     def __init__(self):
@@ -57,14 +57,16 @@ class Worker(object):
                 job.start_time = time.time()
                 session.commit()
 
+                cache = get_cache(job._user)
+
                 if job.type == 'like':
-                    jobs.like(job, session)
+                    jobs.like(job, session, cache)
                 elif job.type == 'follow':
-                    jobs.follow(job, session)
+                    jobs.follow(job, session, cache)
                 elif job.type == 'unfollow':
-                    jobs.unfollow(job, session)
+                    jobs.unfollow(job, session, cache)
                 elif job.type == 'charge':
-                    jobs.charge(job, session)
+                    jobs.charge(job, session, cache)
 
         except Exception as e:
             f_name = os.path.basename(sys.exc_info()[2].tb_frame.f_code.co_filename)

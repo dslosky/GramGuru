@@ -9,13 +9,11 @@ import random
 import sys
 
 from orm import *
-from util import shuffle, Configs, log
+from util import shuffle, Configs, log, save_cache
 CONFIG = Configs()
 
 class Insta(object):
-    def __init__(self):
-        # load settings
-
+    def __init__(self, cache=None):
         # load the driver
         if CONFIG['browser'] == 'chrome':
             self.driver = webdriver.Chrome()
@@ -24,6 +22,10 @@ class Insta(object):
         else:
             raise Exception('No browser configured; add one to configs.json')
         
+        if cache is not None:
+            for cookie in cache:
+                this.driver.add_cookie(cookie)
+
         # open instagram
         self.user = None
         self.driver.get('https://instagram.com')
@@ -231,19 +233,30 @@ class Insta(object):
             password = user['password']
         
         self.user = username
-        self.driver.find_element_by_link_text('Log in').click()
-        self.driver.find_element_by_name('username').send_keys(username)
-        self.driver.find_element_by_name('password').send_keys(password)
-        self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]").click()
-        time.sleep(3)
-        # check if the login worked
+
         try:
-            login_el = self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]")
-            # If that element is found, we're still on the login page... bad credentials
+            self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]")
+
+            # self.driver.find_element_by_link_text('Log in').click()
+            self.driver.find_element_by_name('username').send_keys(username)
+            self.driver.find_element_by_name('password').send_keys(password)
+            self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]").click()
+            time.sleep(3)
+            # check if the login worked
+
+
+            # If the log in element is found, we're still on the login page... bad credentials
+            self.driver.find_element_by_xpath("//*[contains(text(), 'Log in')]")
             return False
+
         except Exception as e:
             # no more login element, login successful!
+            this.user = username
             return True
+
+    def quit(self):
+        save_cache(self.user, self.driver.get_cookies())
+        self.driver.quit()
 
 if __name__ == '__main__':
     session = Session()
