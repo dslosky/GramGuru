@@ -24,7 +24,7 @@ class Insta(object):
         
         if cache is not None:
             for cookie in cache:
-                this.driver.add_cookie(cookie)
+                self.driver.add_cookie(cookie)
 
         # open instagram
         self.user = None
@@ -251,7 +251,7 @@ class Insta(object):
 
         except Exception as e:
             # no more login element, login successful!
-            this.user = username
+            self.user = username
             return True
 
     def quit(self):
