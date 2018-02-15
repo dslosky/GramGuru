@@ -21,15 +21,17 @@ class Insta(object):
             self.driver = webdriver.PhantomJS()
         else:
             raise Exception('No browser configured; add one to configs.json')
-        
-        if cache is not None:
-            for cookie in cache:
-                self.driver.add_cookie(cookie)
 
         # open instagram
         self.user = None
         self.driver.get('https://instagram.com')
         self.main_handle = self.driver.window_handles[0]
+
+        if cache is not None:
+            for cookie in cache:
+                self.driver.add_cookie(cookie)
+
+        self.driver.refresh()
 
     def search(self, tag):
         self.driver.get('https://www.instagram.com/explore/tags/' + tag + '/')
