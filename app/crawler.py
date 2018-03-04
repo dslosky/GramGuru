@@ -29,7 +29,10 @@ class Insta(object):
 
         if cache is not None:
             for cookie in cache:
-                self.driver.add_cookie(cookie)
+                try:
+                    self.driver.add_cookie(cookie)
+                except:
+                    continue
 
         self.driver.refresh()
 
